@@ -2,8 +2,7 @@
 
 use super::*;
 
-use std::collections::HashSet;
-use std::hash::Hash;
+mod collections;
 
 impl<'a, A, B> Functor<'a, B> for Option<A>
 where
@@ -28,6 +27,29 @@ where
     }
 }
 
+impl<'a, A, B, E> Functor<'a, B> for Result<A, E>
+where
+    A: 'a,
+    B: 'a,
+{
+    type Inner = A;
+    type Mapped<'b> = Result<B, E>
+    where
+        'a: 'b,
+        B: 'b;
+    type Map<'b, C> = Result<C, E>
+    where
+        'a: 'b,
+        C: 'a;
+    fn fmap<'b, F>(self, f: F) -> Result<B, E>
+    where
+        'a: 'b,
+        F: Fn(A) -> B + 'b,
+    {
+        self.map(f)
+    }
+}
+
 impl<'a, A, B> Functor<'a, B> for Vec<A>
 where
     A: 'a,
@@ -43,29 +65,6 @@ where
         'a: 'b,
         C: 'a;
     fn fmap<'b, F>(self, f: F) -> Vec<B>
-    where
-        'a: 'b,
-        F: Fn(A) -> B + 'b,
-    {
-        self.into_iter().map(f).collect()
-    }
-}
-
-impl<'a, A, B> Functor<'a, B> for HashSet<A>
-where
-    A: 'a + Eq + Hash,
-    B: 'a + Eq + Hash,
-{
-    type Inner = A;
-    type Mapped<'b> = HashSet<B>
-    where
-        'a: 'b,
-        B: 'b;
-    type Map<'b, C> = HashSet<C>
-    where
-        'a: 'b,
-        C: 'a;
-    fn fmap<'b, F>(self, f: F) -> HashSet<B>
     where
         'a: 'b,
         F: Fn(A) -> B + 'b,

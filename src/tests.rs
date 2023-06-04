@@ -1,6 +1,9 @@
 use super::*;
 
-use std::collections::HashSet;
+use std::collections::{
+    BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList,
+    VecDeque,
+};
 
 #[test]
 fn test_identity() {
@@ -21,10 +24,51 @@ fn test_option() {
 }
 
 #[test]
+fn test_result() {
+    let ok: Result<i32, i32> = Ok(2);
+    assert_eq!(ok.fmap(|x| x + 1), Ok(3));
+    let err: Result<i32, i32> = Err(0);
+    assert_eq!(err.fmap(|x| x + 1), Err(0));
+}
+
+#[test]
 fn test_vec() {
     let x: Vec<i32> = vec![7, 22];
     let y: Vec<f64> = x.fmap(|x| (2 * x) as f64);
     assert_eq!(y, [14.0, 44.0]);
+}
+
+#[test]
+fn test_vec_deque() {
+    let x: VecDeque<i32> = VecDeque::from_iter([7, 22]);
+    let y: VecDeque<f64> = x.fmap(|x| (2 * x) as f64);
+    assert_eq!(y, [14.0, 44.0]);
+}
+
+#[test]
+fn test_linked_list() {
+    let x: LinkedList<i32> = LinkedList::from_iter([7, 22]);
+    let y: LinkedList<f64> = x.fmap(|x| (2 * x) as f64);
+    assert_eq!(y.into_iter().collect::<Vec<_>>(), [14.0, 44.0]);
+}
+
+#[test]
+fn test_hash_map() {
+    let x: HashMap<i32, i32> = HashMap::from_iter([(1, 10), (99, 20)]);
+    let y: HashMap<i32, i32> = x.fmap(|value| 3 * value);
+    assert_eq!(y.len(), 2);
+    assert_eq!(y.get(&1), Some(&30));
+    assert_eq!(y.get(&99), Some(&60));
+}
+
+#[test]
+fn test_btree_map() {
+    let x: BTreeMap<i32, i32> =
+        BTreeMap::from_iter([(1, 10), (99, 20)]);
+    let y: BTreeMap<i32, i32> = x.fmap(|value| 3 * value);
+    assert_eq!(y.len(), 2);
+    assert_eq!(y.get(&1), Some(&30));
+    assert_eq!(y.get(&99), Some(&60));
 }
 
 #[test]
@@ -34,6 +78,22 @@ fn test_hash_set() {
     assert_eq!(y.len(), 2);
     assert!(y.contains("40"));
     assert!(y.contains("48"));
+}
+
+#[test]
+fn test_btree_set() {
+    let x: BTreeSet<i32> = BTreeSet::from_iter([5, 6]);
+    let y: BTreeSet<String> = x.fmap(|i| (8 * i).to_string());
+    assert_eq!(y.len(), 2);
+    assert!(y.contains("40"));
+    assert!(y.contains("48"));
+}
+
+#[test]
+fn test_binary_heap() {
+    let x: BinaryHeap<i32> = BinaryHeap::from_iter([5, 6]);
+    let y: BinaryHeap<String> = x.fmap(|i| (8 * i).to_string());
+    assert_eq!(y.into_sorted_vec(), ["40", "48"]);
 }
 
 #[test]
