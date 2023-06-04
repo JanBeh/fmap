@@ -1,0 +1,7 @@
+[package]
+name = "fmap"
+version = "0.0.1"
+authors = ["Jan Behrens <jbe@magnetkern.de>"]
+edition = "2021"
+description = "Functors in Rust"
+license = "MIT OR Apache-2.0"
