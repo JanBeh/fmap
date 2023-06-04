@@ -3,6 +3,17 @@ use super::*;
 use std::collections::HashSet;
 
 #[test]
+fn test_identity() {
+    fn identity<A, B>(x: A) -> B
+    where
+        A: Identity<B>,
+    {
+        x.into_same()
+    }
+    assert_eq!(identity("foo"), "foo");
+}
+
+#[test]
 fn test_option() {
     let x: Option<i32> = Some(9);
     let y: Option<bool> = x.fmap(|x| x > 5);

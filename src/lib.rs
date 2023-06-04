@@ -37,15 +37,6 @@ where
     }
 }
 
-/// Convert from type `A` into `B` asserting that `A` and `B` are the
-/// same type
-pub fn identity<A, B>(x: A) -> B
-where
-    A: Identity<B>,
-{
-    x.into_same()
-}
-
 /// A type constructed by a functor (e.g. `Option<T>` or `Vec<T>`)
 pub trait Functor<'a, B>
 where
