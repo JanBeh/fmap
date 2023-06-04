@@ -37,17 +37,38 @@ where
     }
 }
 
-/// A type constructed by a functor (e.g. `Option<T>` or `Vec<T>`)
+/// A generic type (e.g. `Vec<A>`) whose inner type can be mapped over
+/// (e.g. to `Vec<B>`)
+///
+/// Type parameter `B` specifies the new inner type after the [`fmap`]
+/// operation.
+///
+/// [`fmap`]: Self::fmap
 pub trait Functor<'a, B>
 where
     Self: Identity<Self::Map<'a, Self::Inner>>,
     B: 'a,
 {
-    /// Inner type
+    /// Inner type (e.g. `Inner = A` for `Vec<A>`)
     type Inner: 'a;
 
     /// `Self` with inner type mapped to `B`
-    /// (where `B` is a type parameter of this trait)
+    /// (where `B` is a type parameter of `Functor<'a, B>`)
+    ///
+    /// Both `Functor::Mapped` and [`Functor::Map`] are associated types
+    /// being the same as `Self` but with the inner type
+    /// ([`Functor::Inner`]) changed.
+    /// Both `Functor::Mapped` and `Functor::Map` must be implemented
+    /// consistent with each other.
+    ///
+    /// This associated type (`Mapped`) replaces the inner type with the
+    /// type parameter `B` of the trait.
+    /// For example, `<Vec<A> as Functor<'a, B>>::Mapped<'b> = Vec<B>`.
+    ///
+    /// When `B` is `Self::Inner`, then `Mapped<'a>` must be `Self`
+    /// (which is ensured by the compiler).
+    ///
+    /// [inner type]: Self::Inner
     type Mapped<'b>: Functor<'b, B> + Identity<Self::Map<'b, B>>
     where
         'a: 'b,
@@ -55,6 +76,22 @@ where
 
     /// `Self` with inner type mapped to `C`
     /// (where `C` is a type parameter of this GAT)
+    ///
+    /// Both [`Functor::Mapped`] and `Functor::Map` are associated types
+    /// being the same as `Self` but with the inner type
+    /// ([`Functor::Inner`]) changed.
+    /// Both `Functor::Mapped` and `Functor::Map` must be implemented
+    /// consistent with each other.
+    ///
+    /// This generic associated type (`Map`) replaces the inner type
+    /// with a type parameter `C` that is given to this generic
+    /// associated type.
+    /// For example, `<Vec<A> as Functor<'a, B>>::Map<'b, C> = Vec<C>`.
+    ///
+    /// `Map<'a, Self::Inner>` must be `Self` (which is ensured by the
+    /// compiler).
+    ///
+    /// [inner type]: Self::Inner
     type Map<'b, C>
     where
         'a: 'b,
@@ -65,11 +102,31 @@ where
     where
         'a: 'b,
         F: 'b + Fn(Self::Inner) -> B;
+
+    /// Specialized variant of [`fmap`] where the [inner type] isn't
+    /// changed
+    ///
+    /// Opposed to [`fmap`], this method returns `Self` instead of
+    /// [`Self::Mapped`], which can help reducing unnecessary trait
+    /// bounds.
+    /// Its default implementation may be overriden where a more
+    /// efficient implementation is available when [`Functor<B>::Inner`]
+    /// and `B` are the same types.
+    ///
+    /// [`fmap`]: Functor::fmap
+    /// [inner type]: Self::Inner
+    fn fmap_same<F>(self, f: F) -> Self
+    where
+        Self: FunctorSelf<'a, B>,
+        F: 'a + Fn(Self::Inner) -> Self::Inner,
+    {
+        self.fmap_same_default_impl(f)
+    }
 }
 
-/// Helper trait to convert between [`T::Mapped`] and `T`
+/// Helper trait to convert between [`<T as Functor>::Mapped`] and `T`
 ///
-/// [`T::Mapped`]: Functor::Mapped
+/// [`<T as Functor>::Mapped`]: Functor::Mapped
 pub trait FunctorSelf<'a, A>: Functor<'a, A>
 where
     A: 'a,
@@ -78,6 +135,15 @@ where
     fn from_mapped(x: Self::Mapped<'a>) -> Self;
     /// Convert from [`Self`] into [`Functor::Mapped`] (no-op)
     fn into_mapped(self) -> Self::Mapped<'a>;
+    /// Wrapper around [`Functor::fmap`], which converts the return
+    /// value into `Self` (no-op conversion)
+    ///
+    /// This method is the default implementation for
+    /// [`Functor::fmap_same`], which may be overridden when
+    /// implementing the [`Functor`] trait.
+    fn fmap_same_default_impl<F>(self, f: F) -> Self
+    where
+        F: 'a + Fn(Self::Inner) -> Self::Inner;
 }
 
 impl<'a, T, A> FunctorSelf<'a, A> for T
@@ -90,5 +156,11 @@ where
     }
     fn into_mapped(self) -> Self::Mapped<'a> {
         Self::Mapped::<'a>::from_same(self.into_same())
+    }
+    fn fmap_same_default_impl<F>(self, f: F) -> Self
+    where
+        F: 'a + Fn(A) -> A,
+    {
+        Self::from_mapped(self.fmap(f))
     }
 }

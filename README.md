@@ -60,7 +60,7 @@ where
 }
 ```
 
-This can either be fixed with an extra bound:
+This can either be fixed with an extra bound (not recommended):
 
 ```
 fn double_inner_i32<'a, T>(x: T) -> T
@@ -72,17 +72,14 @@ where
 }
 ```
 
-Or it can be fixed using the zero-cost `FunctorSelf::from_mapped` helper
-function:
+Or it can be fixed using `Functor::fmap_same` instead (recommended):
 
 ```
-use fmap::FunctorSelf as _;
-
 fn double_inner_i32<'a, T>(x: T) -> T
 where
     T: Functor<'a, i32, Inner = i32>,
 {
     //x.fmap(|x| 2 * x) // doesn't work
-    T::from_mapped(x.fmap(|x| 2 * x))
+    x.fmap_same(|x| 2 * x)
 }
 ```

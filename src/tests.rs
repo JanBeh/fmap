@@ -119,12 +119,12 @@ fn test_boxed_iterator() {
 }
 
 #[test]
-fn test_from_mapped() {
+fn test_fmap_same() {
     fn double<'a, T>(x: T) -> T
     where
         T: Functor<'a, i32, Inner = i32>,
     {
-        T::from_mapped(x.fmap(|x| 2 * x))
+        x.fmap_same(|x| 2 * x)
     }
     let mut x: Vec<i32> = vec![1, 2, 3];
     x = double(x);
