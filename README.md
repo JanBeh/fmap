@@ -72,9 +72,12 @@ where
 }
 ```
 
-Or it can be fixed using the zero-cost `Functor::from_mapped` helper function:
+Or it can be fixed using the zero-cost `FunctorSelf::from_mapped` helper
+function:
 
 ```
+use fmap::FunctorSelf as _;
+
 fn double_inner_i32<'a, T>(x: T) -> T
 where
     T: Functor<'a, i32, Inner = i32>,
