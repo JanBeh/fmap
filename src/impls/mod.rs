@@ -44,7 +44,7 @@ where
     fn fmap<'b, F>(self, f: F) -> Result<B, E>
     where
         'a: 'b,
-        F: Fn(A) -> B + 'b,
+        F: 'b + Fn(A) -> B,
     {
         self.map(f)
     }
@@ -67,7 +67,7 @@ where
     fn fmap<'b, F>(self, f: F) -> Vec<B>
     where
         'a: 'b,
-        F: Fn(A) -> B + 'b,
+        F: 'b + Fn(A) -> B,
     {
         self.into_iter().map(f).collect()
     }

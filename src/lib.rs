@@ -64,7 +64,7 @@ where
     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
-        F: Fn(Self::Inner) -> B + 'b;
+        F: 'b + Fn(Self::Inner) -> B;
 }
 
 /// Helper trait to convert between [`T::Mapped`] and `T`

@@ -25,7 +25,7 @@ where
     fn fmap<'b, F>(self, f: F) -> VecDeque<B>
     where
         'a: 'b,
-        F: Fn(A) -> B + 'b,
+        F: 'b + Fn(A) -> B,
     {
         self.into_iter().map(f).collect()
     }
@@ -48,7 +48,7 @@ where
     fn fmap<'b, F>(self, f: F) -> LinkedList<B>
     where
         'a: 'b,
-        F: Fn(A) -> B + 'b,
+        F: 'b + Fn(A) -> B,
     {
         self.into_iter().map(f).collect()
     }
@@ -72,7 +72,7 @@ where
     fn fmap<'b, F>(self, f: F) -> HashMap<K, B>
     where
         'a: 'b,
-        F: Fn(A) -> B + 'b,
+        F: 'b + Fn(A) -> B,
     {
         self.into_iter().map(|(k, v)| (k, f(v))).collect()
     }
@@ -96,7 +96,7 @@ where
     fn fmap<'b, F>(self, f: F) -> BTreeMap<K, B>
     where
         'a: 'b,
-        F: Fn(A) -> B + 'b,
+        F: 'b + Fn(A) -> B,
     {
         self.into_iter().map(|(k, v)| (k, f(v))).collect()
     }
@@ -119,7 +119,7 @@ where
     fn fmap<'b, F>(self, f: F) -> HashSet<B>
     where
         'a: 'b,
-        F: Fn(A) -> B + 'b,
+        F: 'b + Fn(A) -> B,
     {
         self.into_iter().map(f).collect()
     }
@@ -142,7 +142,7 @@ where
     fn fmap<'b, F>(self, f: F) -> BTreeSet<B>
     where
         'a: 'b,
-        F: Fn(A) -> B + 'b,
+        F: 'b + Fn(A) -> B,
     {
         self.into_iter().map(f).collect()
     }
@@ -165,7 +165,7 @@ where
     fn fmap<'b, F>(self, f: F) -> BinaryHeap<B>
     where
         'a: 'b,
-        F: Fn(A) -> B + 'b,
+        F: 'b + Fn(A) -> B,
     {
         self.into_iter().map(f).collect()
     }

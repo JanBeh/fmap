@@ -26,7 +26,7 @@ where
     fn fmap<'b, F>(self, f: F) -> Option<B>
     where
         'a: 'b,
-        F: Fn(A) -> B + 'b,
+        F: 'b + Fn(A) -> B,
     {
         self.map(f)
     }
