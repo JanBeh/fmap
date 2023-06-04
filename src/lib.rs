@@ -74,9 +74,9 @@ pub trait FunctorSelf<'a, A>: Functor<'a, A>
 where
     A: 'a,
 {
-    /// Covert from [`Functor::Mapped`] into `Self` (no-op)
+    /// Convert from [`Functor::Mapped`] into `Self` (no-op)
     fn from_mapped(x: Self::Mapped<'a>) -> Self;
-    /// Covert from [`Self`] into [`Functor::Mapped`] (no-op)
+    /// Convert from [`Self`] into [`Functor::Mapped`] (no-op)
     fn into_mapped(self) -> Self::Mapped<'a>;
 }
 
