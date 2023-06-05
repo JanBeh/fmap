@@ -20,7 +20,7 @@ where
     /// Inner type (e.g. `Inner = A` for `Vec<A>`)
     type Inner: 'a;
 
-    /// `Self` with inner type mapped to a different type
+    /// `Self` but with inner type mapped to `B`
     ///
     /// For example, `<Vec<A> as Functor<'a, B>>::Mapped<'b> = Vec<B>`.
     type Mapped<'b>
