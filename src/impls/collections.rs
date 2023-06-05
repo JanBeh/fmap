@@ -18,10 +18,7 @@ where
     where
         'a: 'b,
         C: 'a;
-    type Mapped<'b> = Self::Map<'b, B>
-    where
-        'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn fmap<'b, F>(self, f: F) -> Self::Map<'b, B>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -40,10 +37,7 @@ where
     where
         'a: 'b,
         C: 'a;
-    type Mapped<'b> = Self::Map<'b, B>
-    where
-        'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn fmap<'b, F>(self, f: F) -> Self::Map<'b, B>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -63,10 +57,7 @@ where
     where
         'a: 'b,
         C: 'a;
-    type Mapped<'b> = Self::Map<'b, B>
-    where
-        'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn fmap<'b, F>(self, f: F) -> Self::Map<'b, B>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -86,10 +77,7 @@ where
     where
         'a: 'b,
         C: 'a;
-    type Mapped<'b> = Self::Map<'b, B>
-    where
-        'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn fmap<'b, F>(self, f: F) -> Self::Map<'b, B>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -108,10 +96,7 @@ where
     where
         'a: 'b,
         C: 'a;
-    type Mapped<'b> = Self::Map<'b, B>
-    where
-        'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn fmap<'b, F>(self, f: F) -> Self::Map<'b, B>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -130,10 +115,7 @@ where
     where
         'a: 'b,
         C: 'a;
-    type Mapped<'b> = Self::Map<'b, B>
-    where
-        'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn fmap<'b, F>(self, f: F) -> Self::Map<'b, B>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -152,10 +134,7 @@ where
     where
         'a: 'b,
         C: 'a;
-    type Mapped<'b> = Self::Map<'b, B>
-    where
-        'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn fmap<'b, F>(self, f: F) -> Self::Map<'b, B>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,

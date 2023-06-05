@@ -19,9 +19,6 @@ where
     where
         'a: 'b,
         C: 'a;
-    type Mapped<'b> = Self::Map<'b, B> // set always to `Self::Map<'b, B>`
-    where
-        'a: 'b;
     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
