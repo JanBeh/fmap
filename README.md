@@ -17,8 +17,7 @@ where
     type Inner = A;
     type Mapped<'b> = Option<B>
     where
-        'a: 'b,
-        B: 'b;
+        'a: 'b;
     type Map<'b, C> = Option<C>
     where
         'a: 'b,

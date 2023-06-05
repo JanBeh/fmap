@@ -71,8 +71,7 @@ where
     /// [inner type]: Self::Inner
     type Mapped<'b>: Functor<'b, B> + Identity<Self::Map<'b, B>>
     where
-        'a: 'b,
-        B: 'b;
+        'a: 'b;
 
     /// `Self` with inner type mapped to `C`
     /// (where `C` is a type parameter of this GAT)

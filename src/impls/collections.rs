@@ -16,8 +16,7 @@ where
     type Inner = A;
     type Mapped<'b> = VecDeque<B>
     where
-        'a: 'b,
-        B: 'b;
+        'a: 'b;
     type Map<'b, C> = VecDeque<C>
     where
         'a: 'b,
@@ -39,8 +38,7 @@ where
     type Inner = A;
     type Mapped<'b> = LinkedList<B>
     where
-        'a: 'b,
-        B: 'b;
+        'a: 'b;
     type Map<'b, C> = LinkedList<C>
     where
         'a: 'b,
@@ -63,8 +61,7 @@ where
     type Inner = A;
     type Mapped<'b> = HashMap<K, B>
     where
-        'a: 'b,
-        B: 'b;
+        'a: 'b;
     type Map<'b, C> = HashMap<K, C>
     where
         'a: 'b,
@@ -87,8 +84,7 @@ where
     type Inner = A;
     type Mapped<'b> = BTreeMap<K, B>
     where
-        'a: 'b,
-        B: 'b;
+        'a: 'b;
     type Map<'b, C> = BTreeMap<K, C>
     where
         'a: 'b,
@@ -110,8 +106,7 @@ where
     type Inner = A;
     type Mapped<'b> = HashSet<B>
     where
-        'a: 'b,
-        B: 'b;
+        'a: 'b;
     type Map<'b, C> = HashSet<C>
     where
         'a: 'b,
@@ -133,8 +128,7 @@ where
     type Inner = A;
     type Mapped<'b> = BTreeSet<B>
     where
-        'a: 'b,
-        B: 'b;
+        'a: 'b;
     type Map<'b, C> = BTreeSet<C>
     where
         'a: 'b,
@@ -156,8 +150,7 @@ where
     type Inner = A;
     type Mapped<'b> = BinaryHeap<B>
     where
-        'a: 'b,
-        B: 'b;
+        'a: 'b;
     type Map<'b, C> = BinaryHeap<C>
     where
         'a: 'b,

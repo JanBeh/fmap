@@ -12,8 +12,7 @@ where
     type Inner = A;
     type Mapped<'b> = Option<B>
     where
-        'a: 'b,
-        B: 'b;
+        'a: 'b;
     type Map<'b, C> = Option<C>
     where
         'a: 'b,
@@ -21,7 +20,7 @@ where
     fn fmap<'b, F>(self, f: F) -> Option<B>
     where
         'a: 'b,
-        F: Fn(A) -> B + 'b,
+        F: 'b + Fn(A) -> B,
     {
         self.map(f)
     }
@@ -35,8 +34,7 @@ where
     type Inner = A;
     type Mapped<'b> = Result<B, E>
     where
-        'a: 'b,
-        B: 'b;
+        'a: 'b;
     type Map<'b, C> = Result<C, E>
     where
         'a: 'b,
@@ -58,8 +56,7 @@ where
     type Inner = A;
     type Mapped<'b> = Vec<B>
     where
-        'a: 'b,
-        B: 'b;
+        'a: 'b;
     type Map<'b, C> = Vec<C>
     where
         'a: 'b,
@@ -81,8 +78,7 @@ where
     type Inner = A;
     type Mapped<'b> = Box<dyn 'b + Iterator<Item = B>>
     where
-        'a: 'b,
-        B: 'b;
+        'a: 'b;
     type Map<'b, C> = Box<dyn 'b + Iterator<Item = C>>
     where
         'a: 'b,
