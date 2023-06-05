@@ -6,8 +6,8 @@ mod impls;
 #[cfg(test)]
 mod tests;
 
-/// A generic type (e.g. `Vec<A>`) whose inner type can be mapped over
-/// (e.g. to `Vec<B>`)
+/// A generic type (e.g. `T<A>`) whose inner type can be mapped over
+/// (e.g. resulting in `T<B>`)
 ///
 /// Type parameter `B` specifies the new inner type after the [`fmap`]
 /// operation.
