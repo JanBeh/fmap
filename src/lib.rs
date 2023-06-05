@@ -41,7 +41,7 @@ where
 /// [`fmap`]: Self::fmap
 pub trait Functor<'a, B>
 where
-    Self: Identity<Self::Map<'a, Self::Inner>>,
+    Self: Identity<Self::Mapped<'a, Self::Inner>>,
     B: 'a,
 {
     /// Inner type (e.g. `Inner = A` for `Vec<A>`)
@@ -49,16 +49,17 @@ where
 
     /// `Self` with inner type mapped to a different type
     ///
-    /// For example, `<Vec<A> as Functor<'a, B>>::Map<'b, C> = Vec<C>`.
-    /// It is required that `T::Map<'a, T::Inner> = T` (which is
+    /// For example,
+    /// `<Vec<A> as Functor<'a, B>>::Mapped<'b, C> = Vec<C>`.
+    /// It is required that `T::Mapped<'a, T::Inner> = T` (which is
     /// ensured by the compiler).
-    type Map<'b, C>
+    type Mapped<'b, C>
     where
         'a: 'b,
         C: 'a;
 
     /// Replaces inner type and value by applying a mapping function
-    fn fmap<'b, F>(self, f: F) -> Self::Map<'b, B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b, B>
     where
         'a: 'b,
         F: 'b + Fn(Self::Inner) -> B;
@@ -67,7 +68,7 @@ where
     /// changed
     ///
     /// Opposed to [`fmap`], this method returns `Self` instead of
-    /// [`Self::Map<B>`], which can help reducing unnecessary trait
+    /// [`Self::Mapped<B>`], which can help reducing unnecessary trait
     /// bounds.
     /// Its default implementation may be overriden where a more
     /// efficient implementation is available when [`Functor<B>::Inner`]
@@ -84,17 +85,17 @@ where
     }
 }
 
-/// Helper trait to convert between [`<T as Functor>::Map`] and `T`
+/// Helper trait to convert between [`<T as Functor>::Mapped`] and `T`
 ///
-/// [`<T as Functor>::Map`]: Functor::Map
+/// [`<T as Functor>::Mapped`]: Functor::Mapped
 pub trait FunctorSelf<'a, A>: Functor<'a, A>
 where
     A: 'a,
 {
-    /// Convert from [`Functor::Map<A>`] into `Self` (no-op)
-    fn from_mapped(x: Self::Map<'a, A>) -> Self;
-    /// Convert from [`Self`] into [`Functor::Map<A>`] (no-op)
-    fn into_mapped(self) -> Self::Map<'a, A>;
+    /// Convert from [`Functor::Mapped<A>`] into `Self` (no-op)
+    fn from_mapped(x: Self::Mapped<'a, A>) -> Self;
+    /// Convert from [`Self`] into [`Functor::Mapped<A>`] (no-op)
+    fn into_mapped(self) -> Self::Mapped<'a, A>;
     /// Wrapper around [`Functor::fmap`], which converts the return
     /// value into `Self` (no-op conversion)
     ///
@@ -111,10 +112,10 @@ where
     A: 'a,
     T: Functor<'a, A, Inner = A>,
 {
-    fn from_mapped(mapped: Self::Map<'a, A>) -> Self {
+    fn from_mapped(mapped: Self::Mapped<'a, A>) -> Self {
         Self::from_same(mapped)
     }
-    fn into_mapped(self) -> Self::Map<'a, A> {
+    fn into_mapped(self) -> Self::Mapped<'a, A> {
         self.into_same()
     }
     fn fmap_same_default_impl<F>(self, f: F) -> Self

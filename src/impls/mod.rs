@@ -10,11 +10,11 @@ where
     B: 'a,
 {
     type Inner = A;
-    type Map<'b, C> = Option<C>
+    type Mapped<'b, C> = Option<C>
     where
         'a: 'b,
         C: 'a;
-    fn fmap<'b, F>(self, f: F) -> Self::Map<'b, B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b, B>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -29,11 +29,11 @@ where
     B: 'a,
 {
     type Inner = A;
-    type Map<'b, C> = Result<C, E>
+    type Mapped<'b, C> = Result<C, E>
     where
         'a: 'b,
         C: 'a;
-    fn fmap<'b, F>(self, f: F) -> Self::Map<'b, B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b, B>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -48,11 +48,11 @@ where
     B: 'a,
 {
     type Inner = A;
-    type Map<'b, C> = Vec<C>
+    type Mapped<'b, C> = Vec<C>
     where
         'a: 'b,
         C: 'a;
-    fn fmap<'b, F>(self, f: F) -> Self::Map<'b, B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b, B>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -67,11 +67,11 @@ where
     B: 'a,
 {
     type Inner = A;
-    type Map<'b, C> = Box<dyn 'b + Iterator<Item = C>>
+    type Mapped<'b, C> = Box<dyn 'b + Iterator<Item = C>>
     where
         'a: 'b,
         C: 'a;
-    fn fmap<'b, F>(self, f: F) -> Self::Map<'b, B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b, B>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
