@@ -21,7 +21,7 @@ where
     type Mapped<'b> = Self::Map<'b, B>
     where
         'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> VecDeque<B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -43,7 +43,7 @@ where
     type Mapped<'b> = Self::Map<'b, B>
     where
         'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> LinkedList<B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -66,7 +66,7 @@ where
     type Mapped<'b> = Self::Map<'b, B>
     where
         'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> HashMap<K, B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -89,7 +89,7 @@ where
     type Mapped<'b> = Self::Map<'b, B>
     where
         'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> BTreeMap<K, B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -111,7 +111,7 @@ where
     type Mapped<'b> = Self::Map<'b, B>
     where
         'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> HashSet<B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -133,7 +133,7 @@ where
     type Mapped<'b> = Self::Map<'b, B>
     where
         'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> BTreeSet<B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -155,7 +155,7 @@ where
     type Mapped<'b> = Self::Map<'b, B>
     where
         'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> BinaryHeap<B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,

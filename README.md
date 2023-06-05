@@ -15,14 +15,14 @@ where
     B: 'a,
 {
     type Inner = A;
-    type Mapped<'b> = Self::Map<'b, B> // set always to `Self::Map<'b, B>`
-    where
-        'a: 'b;
     type Map<'b, C> = Option<C>
     where
         'a: 'b,
         C: 'a;
-    fn fmap<'b, F>(self, f: F) -> Option<B>
+    type Mapped<'b> = Self::Map<'b, B> // set always to `Self::Map<'b, B>`
+    where
+        'a: 'b;
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,

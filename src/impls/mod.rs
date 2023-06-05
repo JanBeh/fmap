@@ -17,7 +17,7 @@ where
     type Mapped<'b> = Self::Map<'b, B>
     where
         'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> Option<B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -39,7 +39,7 @@ where
     type Mapped<'b> = Self::Map<'b, B>
     where
         'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> Result<B, E>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -61,7 +61,7 @@ where
     type Mapped<'b> = Self::Map<'b, B>
     where
         'a: 'b;
-    fn fmap<'b, F>(self, f: F) -> Vec<B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
