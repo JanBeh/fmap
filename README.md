@@ -43,39 +43,15 @@ assert_eq!(err.fmap(|x| x + 1), Err(0));
 
 ### Mapping a type to itself
 
-Note that the compiler can't infer that mapping an inner type to itself doesn't
-change the wrapped type:
-
-```
-//fn double_inner_i32<'a, T>(x: T) -> T // doesn't work
-fn double_inner_i32<'a, T>(x: T) -> T::Mapped<'a, i32>
-where
-    T: Functor<'a, i32, Inner = i32>,
-{
-    x.fmap(|x| 2 * x)
-}
-```
-
-This can either be fixed with an extra bound (not recommended):
+Note that the compiler requires a `FunctorSelf` bound to infer that
+mapping an inner type to itself doesn't change the wrapped type:
 
 ```
 fn double_inner_i32<'a, T>(x: T) -> T
 where
     //T: Functor<'a, i32, Inner = i32>, // doesn't work
-    T: Functor<'a, i32, Inner = i32, Mapped<'a, i32> = T>,
+    T: FunctorSelf<'a, i32>, // use this instead
 {
     x.fmap(|x| 2 * x)
-}
-```
-
-Or it can be fixed using `Functor::fmap_same` instead (recommended):
-
-```
-fn double_inner_i32<'a, T>(x: T) -> T
-where
-    T: Functor<'a, i32, Inner = i32>,
-{
-    //x.fmap(|x| 2 * x) // doesn't work
-    x.fmap_same(|x| 2 * x)
 }
 ```

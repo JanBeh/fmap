@@ -6,17 +6,6 @@ use std::collections::{
 };
 
 #[test]
-fn test_identity() {
-    fn identity<A, B>(x: A) -> B
-    where
-        A: Identity<B>,
-    {
-        x.into_same()
-    }
-    assert_eq!(identity("foo"), "foo");
-}
-
-#[test]
 fn test_option() {
     let x: Option<i32> = Some(9);
     let y: Option<bool> = x.fmap(|x| x > 5);
@@ -122,10 +111,11 @@ fn test_boxed_iterator() {
 fn test_fmap_same() {
     fn double<'a, T>(x: T) -> T
     where
-        T: Functor<'a, i32, Inner = i32>,
+        T: FunctorSelf<'a, i32>,
     {
-        x.fmap_same(|x| 2 * x)
+        x.fmap(|x| 2 * x)
     }
+
     let mut x: Vec<i32> = vec![1, 2, 3];
     x = double(x);
     assert_eq!(x, [2, 4, 6]);
