@@ -6,21 +6,6 @@ mod impls;
 #[cfg(test)]
 mod tests;
 
-/// Helper items which are not part of the public API
-mod private {
-    use super::FunctorSelf;
-
-    /// Helper trait, automatically implemented for all valid [`Functor`]s
-    pub trait ValidFunctor<'a, A> {}
-
-    impl<'a, T, A> ValidFunctor<'a, A> for T
-    where
-        T: FunctorSelf<'a, A>,
-        A: 'a,
-    {
-    }
-}
-
 /// A generic type (e.g. `Vec<A>`) whose inner type can be mapped over
 /// (e.g. to `Vec<B>`)
 ///
@@ -30,7 +15,6 @@ mod private {
 /// [`fmap`]: Self::fmap
 pub trait Functor<'a, B>
 where
-    Self: private::ValidFunctor<'a, Self::Inner>,
     B: 'a,
 {
     /// Inner type (e.g. `Inner = A` for `Vec<A>`)
