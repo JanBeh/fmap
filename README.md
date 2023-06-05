@@ -15,7 +15,7 @@ where
     B: 'a,
 {
     type Inner = A;
-    type Mapped<'b> = Option<B>
+    type Mapped<'b> = Self::Map<'b, B> // set always to `Self::Map<'b, B>`
     where
         'a: 'b;
     type Map<'b, C> = Option<C>

@@ -52,49 +52,23 @@ where
     /// Inner type (e.g. `Inner = A` for `Vec<A>`)
     type Inner: 'a;
 
-    /// `Self` with inner type mapped to `B`
-    /// (where `B` is a type parameter of `Functor<'a, B>`)
+    /// `Self` with inner type mapped to a different type
     ///
-    /// Both `Functor::Mapped` and [`Functor::Map`] are associated types
-    /// being the same as `Self` but with the inner type
-    /// ([`Functor::Inner`]) changed.
-    /// Both `Functor::Mapped` and `Functor::Map` must be implemented
-    /// consistent with each other.
-    ///
-    /// This associated type (`Mapped`) replaces the inner type with the
-    /// type parameter `B` of the trait.
-    /// For example, `<Vec<A> as Functor<'a, B>>::Mapped<'b> = Vec<B>`.
-    ///
-    /// When `B` is `Self::Inner`, then `Mapped<'a>` must be `Self`
-    /// (which is ensured by the compiler).
-    ///
-    /// [inner type]: Self::Inner
-    type Mapped<'b>: Functor<'b, B> + Identity<Self::Map<'b, B>>
-    where
-        'a: 'b;
-
-    /// `Self` with inner type mapped to `C`
-    /// (where `C` is a type parameter of this GAT)
-    ///
-    /// Both [`Functor::Mapped`] and `Functor::Map` are associated types
-    /// being the same as `Self` but with the inner type
-    /// ([`Functor::Inner`]) changed.
-    /// Both `Functor::Mapped` and `Functor::Map` must be implemented
-    /// consistent with each other.
-    ///
-    /// This generic associated type (`Map`) replaces the inner type
-    /// with a type parameter `C` that is given to this generic
-    /// associated type.
     /// For example, `<Vec<A> as Functor<'a, B>>::Map<'b, C> = Vec<C>`.
-    ///
-    /// `Map<'a, Self::Inner>` must be `Self` (which is ensured by the
-    /// compiler).
-    ///
-    /// [inner type]: Self::Inner
+    /// It is required that `T::Map<'a, T::Inner> = T` (which is
+    /// ensured by the compiler).
     type Map<'b, C>
     where
         'a: 'b,
         C: 'a;
+
+    /// Return type of [`fmap`] method
+    /// (must always be `Self::Map<'b, B>>`)
+    ///
+    /// [`fmap`]: Functor::fmap
+    type Mapped<'b>: Functor<'b, B> + Identity<Self::Map<'b, B>>
+    where
+        'a: 'b;
 
     /// Replaces inner type and value by applying a mapping function
     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>

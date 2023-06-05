@@ -14,13 +14,13 @@ where
     B: 'a,
 {
     type Inner = A;
-    type Mapped<'b> = VecDeque<B>
-    where
-        'a: 'b;
     type Map<'b, C> = VecDeque<C>
     where
         'a: 'b,
         C: 'a;
+    type Mapped<'b> = Self::Map<'b, B>
+    where
+        'a: 'b;
     fn fmap<'b, F>(self, f: F) -> VecDeque<B>
     where
         'a: 'b,
@@ -36,13 +36,13 @@ where
     B: 'a,
 {
     type Inner = A;
-    type Mapped<'b> = LinkedList<B>
-    where
-        'a: 'b;
     type Map<'b, C> = LinkedList<C>
     where
         'a: 'b,
         C: 'a;
+    type Mapped<'b> = Self::Map<'b, B>
+    where
+        'a: 'b;
     fn fmap<'b, F>(self, f: F) -> LinkedList<B>
     where
         'a: 'b,
@@ -59,13 +59,13 @@ where
     B: 'a,
 {
     type Inner = A;
-    type Mapped<'b> = HashMap<K, B>
-    where
-        'a: 'b;
     type Map<'b, C> = HashMap<K, C>
     where
         'a: 'b,
         C: 'a;
+    type Mapped<'b> = Self::Map<'b, B>
+    where
+        'a: 'b;
     fn fmap<'b, F>(self, f: F) -> HashMap<K, B>
     where
         'a: 'b,
@@ -82,13 +82,13 @@ where
     B: 'a,
 {
     type Inner = A;
-    type Mapped<'b> = BTreeMap<K, B>
-    where
-        'a: 'b;
     type Map<'b, C> = BTreeMap<K, C>
     where
         'a: 'b,
         C: 'a;
+    type Mapped<'b> = Self::Map<'b, B>
+    where
+        'a: 'b;
     fn fmap<'b, F>(self, f: F) -> BTreeMap<K, B>
     where
         'a: 'b,
@@ -104,13 +104,13 @@ where
     B: 'a + Eq + Hash,
 {
     type Inner = A;
-    type Mapped<'b> = HashSet<B>
-    where
-        'a: 'b;
     type Map<'b, C> = HashSet<C>
     where
         'a: 'b,
         C: 'a;
+    type Mapped<'b> = Self::Map<'b, B>
+    where
+        'a: 'b;
     fn fmap<'b, F>(self, f: F) -> HashSet<B>
     where
         'a: 'b,
@@ -126,13 +126,13 @@ where
     B: 'a + Ord,
 {
     type Inner = A;
-    type Mapped<'b> = BTreeSet<B>
-    where
-        'a: 'b;
     type Map<'b, C> = BTreeSet<C>
     where
         'a: 'b,
         C: 'a;
+    type Mapped<'b> = Self::Map<'b, B>
+    where
+        'a: 'b;
     fn fmap<'b, F>(self, f: F) -> BTreeSet<B>
     where
         'a: 'b,
@@ -148,13 +148,13 @@ where
     B: 'a + Ord,
 {
     type Inner = A;
-    type Mapped<'b> = BinaryHeap<B>
-    where
-        'a: 'b;
     type Map<'b, C> = BinaryHeap<C>
     where
         'a: 'b,
         C: 'a;
+    type Mapped<'b> = Self::Map<'b, B>
+    where
+        'a: 'b;
     fn fmap<'b, F>(self, f: F) -> BinaryHeap<B>
     where
         'a: 'b,
