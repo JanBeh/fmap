@@ -6,19 +6,14 @@ mod impls;
 #[cfg(test)]
 mod tests;
 
-/// Trait allowing to include concrete types in bounds
-pub trait Reflect {
-    /// Same as `Self`
-    type This: ?Sized;
-}
-
-impl<T: ?Sized> Reflect for T {
-    type This = Self;
+mod sealed {
+    pub trait Identity<T> {}
+    impl<T> Identity<T> for T {}
 }
 
 /// Trait `Identity<T>` is implemented for all `T: Sized`
 /// and allows conversion between `Self` and `T`
-pub trait Identity<T>: Sized + Reflect<This = T> {
+pub trait Identity<T>: Sized + sealed::Identity<T> {
     /// Convert from `T` into `Self` (no-op)
     fn from_same(this: T) -> Self;
     /// Convert from `Self` into `T` (no-op)
@@ -27,7 +22,7 @@ pub trait Identity<T>: Sized + Reflect<This = T> {
 
 impl<T> Identity<T> for T
 where
-    T: Reflect<This = T>,
+    T: sealed::Identity<T>,
 {
     fn from_same(x: T) -> Self {
         x
