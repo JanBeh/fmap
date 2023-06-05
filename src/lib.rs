@@ -24,8 +24,8 @@ impl<T> Identity<T> for T
 where
     T: sealed::Identity<T>,
 {
-    fn from_same(x: T) -> Self {
-        x
+    fn from_same(this: T) -> Self {
+        this
     }
     fn into_same(self) -> T {
         self
