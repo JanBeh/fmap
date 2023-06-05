@@ -19,7 +19,7 @@ where
     where
         'a: 'b,
         C: 'a;
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn fmap<'b, F>(self, f: F) -> Self::Map<'b, B>
     where
         'a: 'b,
         F: 'b + Fn(A) -> B,
@@ -48,7 +48,7 @@ change the wrapped type:
 
 ```
 //fn double_inner_i32<'a, T>(x: T) -> T // doesn't work
-fn double_inner_i32<'a, T>(x: T) -> T::Mapped<'a>
+fn double_inner_i32<'a, T>(x: T) -> T::Map<'a, i32>
 where
     T: Functor<'a, i32, Inner = i32>,
 {
@@ -62,7 +62,7 @@ This can either be fixed with an extra bound (not recommended):
 fn double_inner_i32<'a, T>(x: T) -> T
 where
     //T: Functor<'a, i32, Inner = i32>, // doesn't work
-    T: Functor<'a, i32, Inner = i32, Mapped<'a> = T>,
+    T: Functor<'a, i32, Inner = i32, Map<'a, i32> = T>,
 {
     x.fmap(|x| 2 * x)
 }
