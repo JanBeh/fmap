@@ -15,10 +15,9 @@ where
     B: 'a,
 {
     type Inner = A;
-    type Mapped<'b, C> = Option<C>
+    type Mapped<'b> = Option<B>
     where
-        'a: 'b,
-        C: 'a;
+        'a: 'b;
     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b, B>
     where
         'a: 'b,

@@ -8,25 +8,15 @@ mod tests;
 
 /// Helper items which are not part of the public API
 mod private {
-    use super::Functor;
+    use super::FunctorSelf;
 
     /// Helper trait, automatically implemented for all valid [`Functor`]s
-    ///
-    /// This trait is automatically implemented for all [`Functor<'a, B>`]
-    /// where `Self::Mapped<'a, Self::Inner> = Self`.
-    ///
-    /// [`Functor<'a, B>`]: Functor
-    pub trait ValidFunctor<'a, B> {}
+    pub trait ValidFunctor<'a, A> {}
 
-    impl<'a, T, B> ValidFunctor<'a, B> for T
+    impl<'a, T, A> ValidFunctor<'a, A> for T
     where
-        T: ?Sized,
-        T: Functor<
-            'a,
-            B,
-            Mapped<'a, <Self as Functor<'a, B>>::Inner> = Self,
-        >,
-        B: 'a,
+        T: FunctorSelf<'a, A>,
+        A: 'a,
     {
     }
 }
@@ -37,32 +27,24 @@ mod private {
 /// Type parameter `B` specifies the new inner type after the [`fmap`]
 /// operation.
 ///
-/// It is a requirement that `Self::Mapped<'a, Self::Inner> = Self`
-/// (ensured through the `ValidFunctor` supertrait, which is
-/// automatically implemented when this requirement is fulfilled).
-///
 /// [`fmap`]: Self::fmap
 pub trait Functor<'a, B>
 where
-    Self: private::ValidFunctor<'a, B>,
+    Self: private::ValidFunctor<'a, Self::Inner>,
     B: 'a,
 {
     /// Inner type (e.g. `Inner = A` for `Vec<A>`)
     type Inner: 'a;
 
-    /// `Self` with inner type mapped to a different type `C`
+    /// `Self` with inner type mapped to a different type
     ///
-    /// For example,
-    /// `<Vec<A> as Functor<'a, B>>::Mapped<'b, C> = Vec<C>`.
-    ///
-    /// It is required that `T::Mapped<'a, T::Inner> = T`.
-    type Mapped<'b, C>
+    /// For example, `<Vec<A> as Functor<'a, B>>::Mapped<'b> = Vec<B>`.
+    type Mapped<'b>
     where
-        'a: 'b,
-        C: 'a;
+        'a: 'b;
 
     /// Replaces inner type and value by applying a mapping function
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b, B>
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         F: 'b + Fn(Self::Inner) -> B;
@@ -90,14 +72,14 @@ where
 pub trait FunctorSelf<'a, A>
 where
     Self: Sized,
-    Self: Functor<'a, A, Inner = A, Mapped<'a, A> = Self>,
+    Self: Functor<'a, A, Inner = A, Mapped<'a> = Self>,
     A: 'a,
 {
 }
 
 impl<'a, T, A> FunctorSelf<'a, A> for T
 where
-    T: Functor<'a, A, Inner = A, Mapped<'a, A> = T>,
+    T: Functor<'a, A, Inner = A, Mapped<'a> = T>,
     A: 'a,
 {
 }
