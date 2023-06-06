@@ -2,6 +2,8 @@
 
 use super::*;
 
+use std::mem::take;
+
 use std::collections::{
     BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList,
     VecDeque,
@@ -207,7 +209,7 @@ where
         Self: FunctorSelf<'a, A>,
         F: 'a + Fn(&mut Self::Inner),
     {
-        let this = std::mem::take(self);
+        let this = take(self);
         *self = this.fmap_fn_mutref(f);
         self
     }
@@ -229,14 +231,6 @@ where
     {
         self.into_iter().map(f).collect()
     }
-    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
-    where
-        Self: FunctorSelf<'a, A>,
-        F: 'a + Fn(&mut Self::Inner),
-    {
-        self.fmap_mut(f);
-        self
-    }
 }
 
 impl<'a, A> FunctorMut<'a, A> for BTreeSet<A>
@@ -248,7 +242,7 @@ where
         Self: FunctorSelf<'a, A>,
         F: 'a + Fn(&mut Self::Inner),
     {
-        let this = std::mem::take(self);
+        let this = take(self);
         *self = this.fmap_fn_mutref(f);
         self
     }
@@ -270,14 +264,6 @@ where
     {
         self.into_iter().map(f).collect()
     }
-    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
-    where
-        Self: FunctorSelf<'a, A>,
-        F: 'a + Fn(&mut Self::Inner),
-    {
-        self.fmap_mut(f);
-        self
-    }
 }
 
 impl<'a, A> FunctorMut<'a, A> for BinaryHeap<A>
@@ -289,7 +275,7 @@ where
         Self: FunctorSelf<'a, A>,
         F: 'a + Fn(&mut Self::Inner),
     {
-        let this = std::mem::take(self);
+        let this = take(self);
         *self = this.fmap_fn_mutref(f);
         self
     }
