@@ -135,6 +135,20 @@ where
     /// place.
     /// See also [`FunctorMut::fmap_mut`], which works on `&mut self`.
     ///
+    /// For types which implement `FunctorMut` and where `fmap_mut`'s
+    /// implementation doesn't use `fmap_fn_mutref`, consider to provide
+    /// the following implementation:
+    ///
+    /// ```ignore
+    /// fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    /// where
+    ///     F: 'a + Fn(&mut Self::Inner),
+    /// {
+    ///     self.fmap_mut(f);
+    ///     self
+    /// }
+    /// ```
+    ///
     /// [`fmap`]: Functor::fmap
     fn fmap_fn_mutref<F>(self, f: F) -> Self
     where
