@@ -22,7 +22,6 @@ where
     }
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        Self: FunctorSelf<'a, A>,
         F: 'a + Fn(&mut Self::Inner),
     {
         self.fmap_mut(f);
@@ -36,7 +35,6 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F) -> &mut Self
     where
-        Self: FunctorSelf<'a, A>,
         F: 'a + Fn(&mut Self::Inner),
     {
         if let Some(inner) = self {
@@ -64,7 +62,6 @@ where
     }
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        Self: FunctorSelf<'a, A>,
         F: 'a + Fn(&mut Self::Inner),
     {
         self.fmap_mut(f);
@@ -78,7 +75,6 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F) -> &mut Self
     where
-        Self: FunctorSelf<'a, A>,
         F: 'a + Fn(&mut Self::Inner),
     {
         if let Ok(inner) = self {
@@ -106,7 +102,6 @@ where
     }
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        Self: FunctorSelf<'a, A>,
         F: 'a + Fn(&mut Self::Inner),
     {
         self.fmap_mut(f);
@@ -120,7 +115,6 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F) -> &mut Self
     where
-        Self: FunctorSelf<'a, A>,
         F: 'a + Fn(&mut Self::Inner),
     {
         for inner in self.iter_mut() {
@@ -154,7 +148,6 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F) -> &mut Self
     where
-        Self: FunctorSelf<'a, A>,
         F: 'a + Fn(&mut Self::Inner),
     {
         let this =
