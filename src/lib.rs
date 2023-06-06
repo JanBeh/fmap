@@ -1,4 +1,7 @@
 //! Functors in Rust
+//!
+//! # Examples
+//!
 
 #![warn(missing_docs)]
 
@@ -13,6 +16,49 @@ mod tests;
 /// operation.
 ///
 /// [`fmap`]: Self::fmap
+///
+/// # Examples
+///
+/// ## Implementing `Functor`
+///
+/// ```
+/// # use fmap::Functor;
+/// # struct Option<T>(T);
+/// # impl<T> Option<T> {
+/// #     pub fn map<U, F: FnOnce(T) -> U>(self, f: F) -> Option<U> {
+/// #         Option(f(self.0))
+/// #     }
+/// # }
+/// impl<'a, A, B> Functor<'a, B> for Option<A>
+/// where
+///     A: 'a,
+///     B: 'a,
+/// {
+///     type Inner = A;
+///     type Mapped<'b> = Option<B>
+///     where
+///         'a: 'b;
+///     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
+///     where
+///         'a: 'b,
+///         F: 'b + Fn(Self::Inner) -> B,
+///     {
+///         self.map(f)
+///     }
+/// }
+/// ```
+///
+/// ### Using [`Functor::fmap`]
+///
+/// ```
+/// use fmap::Functor;
+///
+/// let ok: Result<i32, i32> = Ok(2);
+/// assert_eq!(ok.fmap(|x| x + 1), Ok(3));
+///
+/// let err: Result<i32, i32> = Err(0);
+/// assert_eq!(err.fmap(|x| x + 1), Err(0));
+/// ```
 pub trait Functor<'a, B>
 where
     B: 'a,
