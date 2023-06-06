@@ -13,29 +13,40 @@ mod tests;
 /// operation.
 ///
 /// [`fmap`]: Self::fmap
-pub trait Functor<'a, A, B>
+pub trait Functor<'a, B>
 where
-    A: 'a,
     B: 'a,
 {
+    /// Inner type (before mapping)
+    ///
+    /// For any functor `T`, define like:
+    /// `<T<A> as Functor<'a, B>>::Inner = A`.
+    type Inner: 'a;
+
     /// `Self` but with inner type mapped to `B`
     ///
-    /// For example,
-    /// `<Vec<A> as Functor<'a, A, B>>::Mapped<'b> = Vec<B>`.
+    /// For any lifetime-free functor `T`, define like:
+    /// `<T<A> as Functor<'a, B>>::Mapped<'b> = T<B>`.
+    ///
+    /// If `T` has a lifetime parameter, then define like:
+    /// `<T<'a, A> as Functor<'a, B>>::Mapped<'b> = T<'b, B>`.
+    /// This allows to shorten the lifetime after lazy mapping
+    /// operations where the mapping closure needs to live at least as
+    /// long as `'b`.
     type Mapped<'b>
     where
         'a: 'b;
 
     /// Replaces inner type and value by applying a mapping function
     ///
-    /// Where `A` and `B` are the same type, consider using
+    /// Where `Self::Inner` and `B` are the same type, consider using
     /// [`Functor::fmap_fn_mutref`] or [`FunctorMut::fmap_mut`], which
     /// might provide specialized implementations that are more
     /// efficient.
     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
-        F: 'b + Fn(A) -> B;
+        F: 'b + Fn(Self::Inner) -> B;
 
     /// Same as [`fmap`] but uses a mapping function that takes a
     /// mutable reference
@@ -48,8 +59,8 @@ where
     /// [`fmap`]: Functor::fmap
     fn fmap_fn_mutref<F>(self, f: F) -> Self
     where
-        Self: FunctorSelf<'a, A>,
-        F: 'a + Fn(&mut A),
+        Self: FunctorSelf<'a, B>,
+        F: 'a + Fn(&mut Self::Inner),
     {
         self.fmap(move |mut inner| {
             f(&mut inner);
@@ -71,7 +82,7 @@ where
 /// # use fmap::FunctorSelf;
 /// fn double_inner_i32<'a, T>(x: T) -> T
 /// where
-///     //T: Functor<'a, i32, i32>, // doesn't work
+///     //T: Functor<'a, i32, Inner = i32>, // doesn't work
 ///     T: FunctorSelf<'a, i32>, // use this instead
 /// {
 ///     x.fmap(|x| 2 * x)
@@ -80,14 +91,14 @@ where
 pub trait FunctorSelf<'a, A>
 where
     Self: Sized,
-    Self: Functor<'a, A, A, Mapped<'a> = Self>,
+    Self: Functor<'a, A, Inner = A, Mapped<'a> = Self>,
     A: 'a,
 {
 }
 
 impl<'a, T, A> FunctorSelf<'a, A> for T
 where
-    T: Functor<'a, A, A, Mapped<'a> = T>,
+    T: Functor<'a, A, Inner = A, Mapped<'a> = T>,
     A: 'a,
 {
 }
@@ -107,5 +118,5 @@ where
     fn fmap_mut<F>(&mut self, f: F) -> &mut Self
     where
         Self: FunctorSelf<'a, A>,
-        F: 'a + Fn(&mut A);
+        F: 'a + Fn(&mut Self::Inner);
 }

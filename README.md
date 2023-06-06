@@ -9,18 +9,19 @@ implementations for all collections in
 ### Implementing `Functor`
 
 ```
-impl<'a, A, B> Functor<'a, A, B> for Option<A>
+impl<'a, A, B> Functor<'a, B> for Option<A>
 where
     A: 'a,
     B: 'a,
 {
+    type Inner = A;
     type Mapped<'b> = Option<B>
     where
         'a: 'b;
     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b, B>
     where
         'a: 'b,
-        F: 'b + Fn(A) -> B,
+        F: 'b + Fn(Self::Inner) -> B,
     {
         self.map(f)
     }
@@ -47,7 +48,7 @@ mapping an inner type to itself doesn't change the wrapped type:
 ```
 fn double_inner_i32<'a, T>(x: T) -> T
 where
-    //T: Functor<'a, i32, i32>, // doesn't work
+    //T: Functor<'a, i32, Inner = i32>, // doesn't work
     T: FunctorSelf<'a, i32>, // use this instead
 {
     x.fmap(|x| 2 * x)
