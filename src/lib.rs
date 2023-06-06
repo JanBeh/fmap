@@ -80,8 +80,8 @@ mod tests;
 ///
 /// fn convert_inner<'a, T, A, B>(outer: T) -> T::Mapped<'a>
 /// where
-///     // NOTE: Also see `FunctorSelf`, which should be used if `A` and `B`
-///     // would be always equal.
+///     // NOTE: `A` and `B` can be different types. Where `A` and `B`
+///     // are always the same type, `FunctorSelf` should be used.
 ///     T: Functor<'a, B, Inner = A>,
 ///     A: 'a + Into<B>,
 /// {
