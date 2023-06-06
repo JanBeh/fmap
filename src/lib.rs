@@ -222,7 +222,7 @@ where
     A: 'a,
 {
     /// Same as [`Functor::fmap_fn_mutref`] but works on `&mut self`
-    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    fn fmap_mut<F>(&mut self, f: F)
     where
         Self: FunctorSelf<'a, A>,
         F: 'a + Fn(&mut Self::Inner);

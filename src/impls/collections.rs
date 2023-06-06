@@ -39,14 +39,13 @@ impl<'a, A> FunctorMut<'a, A> for VecDeque<A>
 where
     A: 'a,
 {
-    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    fn fmap_mut<F>(&mut self, f: F)
     where
         F: 'a + Fn(&mut Self::Inner),
     {
         for inner in self.iter_mut() {
             f(inner);
         }
-        self
     }
 }
 
@@ -79,14 +78,13 @@ impl<'a, A> FunctorMut<'a, A> for LinkedList<A>
 where
     A: 'a,
 {
-    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    fn fmap_mut<F>(&mut self, f: F)
     where
         F: 'a + Fn(&mut Self::Inner),
     {
         for inner in self.iter_mut() {
             f(inner);
         }
-        self
     }
 }
 
@@ -121,14 +119,13 @@ where
     K: Eq + Hash,
     A: 'a,
 {
-    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    fn fmap_mut<F>(&mut self, f: F)
     where
         F: 'a + Fn(&mut Self::Inner),
     {
         for (_, inner) in self.iter_mut() {
             f(inner);
         }
-        self
     }
 }
 
@@ -163,14 +160,13 @@ where
     K: Ord,
     A: 'a,
 {
-    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    fn fmap_mut<F>(&mut self, f: F)
     where
         F: 'a + Fn(&mut Self::Inner),
     {
         for (_, inner) in self.iter_mut() {
             f(inner);
         }
-        self
     }
 }
 
@@ -196,13 +192,12 @@ impl<'a, A> FunctorMut<'a, A> for HashSet<A>
 where
     A: 'a + Eq + Hash,
 {
-    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    fn fmap_mut<F>(&mut self, f: F)
     where
         F: 'a + Fn(&mut Self::Inner),
     {
         let this = take(self);
         *self = this.fmap_fn_mutref(f);
-        self
     }
 }
 
@@ -228,13 +223,12 @@ impl<'a, A> FunctorMut<'a, A> for BTreeSet<A>
 where
     A: 'a + Ord,
 {
-    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    fn fmap_mut<F>(&mut self, f: F)
     where
         F: 'a + Fn(&mut Self::Inner),
     {
         let this = take(self);
         *self = this.fmap_fn_mutref(f);
-        self
     }
 }
 
@@ -260,12 +254,11 @@ impl<'a, A> FunctorMut<'a, A> for BinaryHeap<A>
 where
     A: 'a + Ord,
 {
-    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    fn fmap_mut<F>(&mut self, f: F)
     where
         F: 'a + Fn(&mut Self::Inner),
     {
         let this = take(self);
         *self = this.fmap_fn_mutref(f);
-        self
     }
 }
