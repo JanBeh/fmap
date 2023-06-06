@@ -1,7 +1,22 @@
 //! Functors in Rust
 //!
-//! # Examples
+//! The following traits are provided by this module:
 //!
+//! * [`Functor`] provides a general [`fmap`] method, which is a
+//!   generalization of [`Option::map`], [`Result::map`], and so on, and
+//!   which is [implemented] for a variety of types in the standard
+//!   library.
+//! * [`FunctorSelf`] is a special case of `Functor` where types aren't
+//!   changed when mapping. It is automatically implemented where
+//!   applicable but must be added as a bound in certain cases.
+//! * [`FunctorMut`] is a special case of `FunctorSelf` whose
+//!   [`fmap_mut`] method operates on `&mut self`. It is not implemented
+//!   automatically, but this crate provides implementations for all
+//!   types in the standard library for which `Functor` is implemented.
+//!
+//! [`fmap`]: Functor::fmap
+//! [`fmap_mut`]: FunctorMut::fmap_mut
+//! [implemented]: Functor#foreign-impls
 
 #![warn(missing_docs)]
 
@@ -58,6 +73,24 @@ mod tests;
 ///
 /// let err: Result<i32, i32> = Err(0);
 /// assert_eq!(err.fmap(|x| x + 1), Err(0));
+///
+/// let int_vec: Vec<i32> = vec![2, 3, 5];
+/// let float_vec: Vec<f64> = int_vec.fmap(Into::into);
+/// assert_eq!(float_vec, vec![2.0, 3.0, 5.0]);
+///
+/// fn convert_inner<'a, T, A, B>(outer: T) -> T::Mapped<'a>
+/// where
+///     // NOTE: Also see `FunctorSelf`, which should be used if `A` and `B`
+///     // would be always equal.
+///     T: Functor<'a, B, Inner = A>,
+///     A: 'a + Into<B>,
+/// {
+///     outer.fmap(Into::into)
+/// }
+///
+/// let int_vec2: Vec<i32> = vec![7, 11, 13];
+/// let float_vec2: Vec<f64> = convert_inner(int_vec2);
+/// assert_eq!(float_vec2, vec![7.0, 11.0, 13.0]);
 /// ```
 pub trait Functor<'a, B>
 where
@@ -126,12 +159,14 @@ where
 ///
 /// ```
 /// # use fmap::FunctorSelf;
-/// fn double_inner_i32<'a, T>(x: T) -> T
+/// fn double_inner_i32<'a, T>(outer: T) -> T
 /// where
 ///     //T: Functor<'a, i32, Inner = i32>, // doesn't work
 ///     T: FunctorSelf<'a, i32>, // use this instead
 /// {
-///     x.fmap(|x| 2 * x)
+///     outer.fmap(|x| 2 * x)
+///     // NOTE: The following may be more efficient:
+///     // outer.fmap_fn_mutref(|x| *x *= 2)
 /// }
 /// ```
 pub trait FunctorSelf<'a, A>
@@ -155,6 +190,18 @@ where
 /// implement it but implements [`Functor`], you can always use the
 /// [`Functor::fmap_fn_mutref`] method, which has a default
 /// implementation.
+///
+/// # Example
+///
+/// ```
+/// # use fmap::FunctorMut;
+/// fn double_inner_i32_in_place<'a, T>(outer: &mut T)
+/// where
+///     T: FunctorMut<'a, i32>,
+/// {
+///     outer.fmap_mut(|x| *x *= 2);
+/// }
+/// ```
 pub trait FunctorMut<'a, A>
 where
     Self: FunctorSelf<'a, A>,
