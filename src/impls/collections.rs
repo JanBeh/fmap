@@ -23,6 +23,30 @@ where
     {
         self.into_iter().map(f).collect()
     }
+    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    where
+        Self: FunctorSelf<'a, A>,
+        F: 'a + Fn(&mut A),
+    {
+        self.fmap_mut(f);
+        self
+    }
+}
+
+impl<'a, A> FunctorMut<'a, A> for VecDeque<A>
+where
+    A: 'a,
+{
+    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    where
+        Self: FunctorSelf<'a, A>,
+        F: 'a + Fn(&mut A),
+    {
+        for inner in self.iter_mut() {
+            f(inner);
+        }
+        self
+    }
 }
 
 impl<'a, A, B> Functor<'a, A, B> for LinkedList<A>
@@ -39,6 +63,30 @@ where
         F: 'b + Fn(A) -> B,
     {
         self.into_iter().map(f).collect()
+    }
+    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    where
+        Self: FunctorSelf<'a, A>,
+        F: 'a + Fn(&mut A),
+    {
+        self.fmap_mut(f);
+        self
+    }
+}
+
+impl<'a, A> FunctorMut<'a, A> for LinkedList<A>
+where
+    A: 'a,
+{
+    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    where
+        Self: FunctorSelf<'a, A>,
+        F: 'a + Fn(&mut A),
+    {
+        for inner in self.iter_mut() {
+            f(inner);
+        }
+        self
     }
 }
 
@@ -58,6 +106,31 @@ where
     {
         self.into_iter().map(|(k, v)| (k, f(v))).collect()
     }
+    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    where
+        Self: FunctorSelf<'a, A>,
+        F: 'a + Fn(&mut A),
+    {
+        self.fmap_mut(f);
+        self
+    }
+}
+
+impl<'a, K, A> FunctorMut<'a, A> for HashMap<K, A>
+where
+    K: Eq + Hash,
+    A: 'a,
+{
+    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    where
+        Self: FunctorSelf<'a, A>,
+        F: 'a + Fn(&mut A),
+    {
+        for (_, inner) in self.iter_mut() {
+            f(inner);
+        }
+        self
+    }
 }
 
 impl<'a, K, A, B> Functor<'a, A, B> for BTreeMap<K, A>
@@ -75,6 +148,31 @@ where
         F: 'b + Fn(A) -> B,
     {
         self.into_iter().map(|(k, v)| (k, f(v))).collect()
+    }
+    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    where
+        Self: FunctorSelf<'a, A>,
+        F: 'a + Fn(&mut A),
+    {
+        self.fmap_mut(f);
+        self
+    }
+}
+
+impl<'a, K, A> FunctorMut<'a, A> for BTreeMap<K, A>
+where
+    K: Ord,
+    A: 'a,
+{
+    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    where
+        Self: FunctorSelf<'a, A>,
+        F: 'a + Fn(&mut A),
+    {
+        for (_, inner) in self.iter_mut() {
+            f(inner);
+        }
+        self
     }
 }
 
@@ -95,6 +193,21 @@ where
     }
 }
 
+impl<'a, A> FunctorMut<'a, A> for HashSet<A>
+where
+    A: 'a + Eq + Hash,
+{
+    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    where
+        Self: FunctorSelf<'a, A>,
+        F: 'a + Fn(&mut A),
+    {
+        let this = std::mem::take(self);
+        *self = this.fmap_fn_mutref(f);
+        self
+    }
+}
+
 impl<'a, A, B> Functor<'a, A, B> for BTreeSet<A>
 where
     A: 'a + Ord,
@@ -109,6 +222,29 @@ where
         F: 'b + Fn(A) -> B,
     {
         self.into_iter().map(f).collect()
+    }
+    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    where
+        Self: FunctorSelf<'a, A>,
+        F: 'a + Fn(&mut A),
+    {
+        self.fmap_mut(f);
+        self
+    }
+}
+
+impl<'a, A> FunctorMut<'a, A> for BTreeSet<A>
+where
+    A: 'a + Ord,
+{
+    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    where
+        Self: FunctorSelf<'a, A>,
+        F: 'a + Fn(&mut A),
+    {
+        let this = std::mem::take(self);
+        *self = this.fmap_fn_mutref(f);
+        self
     }
 }
 
@@ -126,5 +262,28 @@ where
         F: 'b + Fn(A) -> B,
     {
         self.into_iter().map(f).collect()
+    }
+    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    where
+        Self: FunctorSelf<'a, A>,
+        F: 'a + Fn(&mut A),
+    {
+        self.fmap_mut(f);
+        self
+    }
+}
+
+impl<'a, A> FunctorMut<'a, A> for BinaryHeap<A>
+where
+    A: 'a + Ord,
+{
+    fn fmap_mut<F>(&mut self, f: F) -> &mut Self
+    where
+        Self: FunctorSelf<'a, A>,
+        F: 'a + Fn(&mut A),
+    {
+        let this = std::mem::take(self);
+        *self = this.fmap_fn_mutref(f);
+        self
     }
 }

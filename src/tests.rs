@@ -120,3 +120,5 @@ fn test_fmap_same() {
     x = double(x);
     assert_eq!(x, [2, 4, 6]);
 }
+
+// TODO: Add tests for `fmap_fn_mutref` and `fmap_mut`
