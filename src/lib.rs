@@ -13,16 +13,15 @@ mod tests;
 /// operation.
 ///
 /// [`fmap`]: Self::fmap
-pub trait Functor<'a, B>
+pub trait Functor<'a, A, B>
 where
+    A: 'a,
     B: 'a,
 {
-    /// Inner type (e.g. `Inner = A` for `Vec<A>`)
-    type Inner: 'a;
-
     /// `Self` but with inner type mapped to `B`
     ///
-    /// For example, `<Vec<A> as Functor<'a, B>>::Mapped<'b> = Vec<B>`.
+    /// For example,
+    /// `<Vec<A> as Functor<'a, A, B>>::Mapped<'b> = Vec<B>`.
     type Mapped<'b>
     where
         'a: 'b;
@@ -31,7 +30,7 @@ where
     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
-        F: 'b + Fn(Self::Inner) -> B;
+        F: 'b + Fn(A) -> B;
 }
 
 /// A [`Functor`] which can be mapped from one type to the same type
@@ -47,7 +46,7 @@ where
 /// # use fmap::FunctorSelf;
 /// fn double_inner_i32<'a, T>(x: T) -> T
 /// where
-///     //T: Functor<'a, i32, Inner = i32>, // doesn't work
+///     //T: Functor<'a, i32, i32>, // doesn't work
 ///     T: FunctorSelf<'a, i32>, // use this instead
 /// {
 ///     x.fmap(|x| 2 * x)
@@ -56,14 +55,14 @@ where
 pub trait FunctorSelf<'a, A>
 where
     Self: Sized,
-    Self: Functor<'a, A, Inner = A, Mapped<'a> = Self>,
+    Self: Functor<'a, A, A, Mapped<'a> = Self>,
     A: 'a,
 {
 }
 
 impl<'a, T, A> FunctorSelf<'a, A> for T
 where
-    T: Functor<'a, A, Inner = A, Mapped<'a> = T>,
+    T: Functor<'a, A, A, Mapped<'a> = T>,
     A: 'a,
 {
 }

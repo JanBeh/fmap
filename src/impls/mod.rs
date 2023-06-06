@@ -4,12 +4,11 @@ use super::*;
 
 mod collections;
 
-impl<'a, A, B> Functor<'a, B> for Option<A>
+impl<'a, A, B> Functor<'a, A, B> for Option<A>
 where
     A: 'a,
     B: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = Option<B>
     where
         'a: 'b;
@@ -22,12 +21,11 @@ where
     }
 }
 
-impl<'a, A, B, E> Functor<'a, B> for Result<A, E>
+impl<'a, A, B, E> Functor<'a, A, B> for Result<A, E>
 where
     A: 'a,
     B: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = Result<B, E>
     where
         'a: 'b;
@@ -40,12 +38,11 @@ where
     }
 }
 
-impl<'a, A, B> Functor<'a, B> for Vec<A>
+impl<'a, A, B> Functor<'a, A, B> for Vec<A>
 where
     A: 'a,
     B: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = Vec<B>
     where
         'a: 'b;
@@ -58,12 +55,11 @@ where
     }
 }
 
-impl<'a, A, B> Functor<'a, B> for Box<dyn 'a + Iterator<Item = A>>
+impl<'a, A, B> Functor<'a, A, B> for Box<dyn 'a + Iterator<Item = A>>
 where
     A: 'a,
     B: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = Box<dyn 'b + Iterator<Item = B>>
     where
         'a: 'b;

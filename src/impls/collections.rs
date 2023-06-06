@@ -8,12 +8,11 @@ use std::collections::{
 };
 use std::hash::Hash;
 
-impl<'a, A, B> Functor<'a, B> for VecDeque<A>
+impl<'a, A, B> Functor<'a, A, B> for VecDeque<A>
 where
     A: 'a,
     B: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = VecDeque<B>
     where
         'a: 'b;
@@ -26,12 +25,11 @@ where
     }
 }
 
-impl<'a, A, B> Functor<'a, B> for LinkedList<A>
+impl<'a, A, B> Functor<'a, A, B> for LinkedList<A>
 where
     A: 'a,
     B: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = LinkedList<B>
     where
         'a: 'b;
@@ -44,13 +42,12 @@ where
     }
 }
 
-impl<'a, K, A, B> Functor<'a, B> for HashMap<K, A>
+impl<'a, K, A, B> Functor<'a, A, B> for HashMap<K, A>
 where
     K: Eq + Hash,
     A: 'a,
     B: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = HashMap<K, B>
     where
         'a: 'b;
@@ -63,13 +60,12 @@ where
     }
 }
 
-impl<'a, K, A, B> Functor<'a, B> for BTreeMap<K, A>
+impl<'a, K, A, B> Functor<'a, A, B> for BTreeMap<K, A>
 where
     K: Ord,
     A: 'a,
     B: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = BTreeMap<K, B>
     where
         'a: 'b;
@@ -82,12 +78,11 @@ where
     }
 }
 
-impl<'a, A, B> Functor<'a, B> for HashSet<A>
+impl<'a, A, B> Functor<'a, A, B> for HashSet<A>
 where
     A: 'a + Eq + Hash,
     B: 'a + Eq + Hash,
 {
-    type Inner = A;
     type Mapped<'b> = HashSet<B>
     where
         'a: 'b;
@@ -100,12 +95,11 @@ where
     }
 }
 
-impl<'a, A, B> Functor<'a, B> for BTreeSet<A>
+impl<'a, A, B> Functor<'a, A, B> for BTreeSet<A>
 where
     A: 'a + Ord,
     B: 'a + Ord,
 {
-    type Inner = A;
     type Mapped<'b> = BTreeSet<B>
     where
         'a: 'b;
@@ -118,12 +112,11 @@ where
     }
 }
 
-impl<'a, A, B> Functor<'a, B> for BinaryHeap<A>
+impl<'a, A, B> Functor<'a, A, B> for BinaryHeap<A>
 where
     A: 'a + Ord,
     B: 'a + Ord,
 {
-    type Inner = A;
     type Mapped<'b> = BinaryHeap<B>
     where
         'a: 'b;
