@@ -2,6 +2,8 @@
 
 use super::*;
 
+#[rustfmt::skip]
+mod boxed_fn;
 mod collections;
 
 impl<'a, A, B> Functor<'a, B> for Option<A>

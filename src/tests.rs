@@ -128,6 +128,14 @@ fn test_binary_heap() {
 }
 
 #[test]
+fn test_boxed_fn() {
+    let mut f: Box<dyn Fn() -> String> =
+        Box::new(|| "Hello World".to_string());
+    f.fmap_mut(|s| s.push('!'));
+    assert_eq!(f(), "Hello World!".to_string());
+}
+
+#[test]
 fn test_boxed_iterator() {
     use std::cell::Cell;
     let strings: Vec<String> = vec!["A".to_string(), "B".to_string()];
