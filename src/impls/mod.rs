@@ -2,7 +2,6 @@
 
 use super::*;
 
-#[rustfmt::skip]
 mod boxed_fn;
 mod collections;
 

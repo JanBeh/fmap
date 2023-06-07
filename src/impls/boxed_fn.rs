@@ -1,5 +1,8 @@
 //! Implementations for [`Fn`] traits in the standard library
 
+// TODO: remove this workaround for rustfmt bug #5580 (see also #5778)
+#![allow(deprecated_where_clause_location)]
+
 use super::*;
 
 macro_rules! fn_impl {
@@ -10,9 +13,10 @@ macro_rules! fn_impl {
             B: 'a,
         {
             type Inner = A;
-            type Mapped<'b> = Box<dyn 'b + $fn() -> B>
+            type Mapped<'b>
             where
-                'a: 'b;
+                'a: 'b,
+            = Box<dyn 'b + $fn() -> B>;
             #[allow(unused_mut)]
             fn fmap<'b, F>(mut self, f: F) -> Self::Mapped<'b>
             where
@@ -46,9 +50,10 @@ macro_rules! fn_impl {
             X: 'a,
         {
             type Inner = A;
-            type Mapped<'b> = Box<dyn 'b + $fn(X) -> B>
+            type Mapped<'b>
             where
-                'a: 'b;
+                'a: 'b,
+            = Box<dyn 'b + $fn(X) -> B>;
             #[allow(unused_mut)]
             fn fmap<'b, F>(mut self, f: F) -> Self::Mapped<'b>
             where
