@@ -148,8 +148,12 @@ where
     where
         F: 'a + Fn(&mut Self::Inner),
     {
-        let this =
-            std::mem::replace(self, Box::new(std::iter::empty()));
+        let this = std::mem::replace(
+            self,
+            Box::new(std::iter::from_fn(|| {
+                panic!("poisoned FunctorMut")
+            })),
+        );
         *self = this.fmap_fn_mutref(f);
     }
 }
