@@ -94,13 +94,13 @@ macro_rules! fn_impl {
             where
                 'b: 'a,
                 A: 'a,
-            = Box<dyn 'b + $fn(A) -> R>;
+            = Box<dyn 'a + $fn(A) -> R>;
             #[allow(unused_mut)]
             fn rmap<'a, F>(mut self, f: F) -> Self::Adapted<'a>
             where
                 'b: 'a,
                 A: 'a,
-                F: 'b + Fn(A) -> Self::Consumee,
+                F: 'a + Fn(A) -> Self::Consumee,
             {
                 Box::new(move |consumee| (self)(f(consumee)))
             }

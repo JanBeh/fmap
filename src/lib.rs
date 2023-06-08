@@ -270,7 +270,7 @@ pub trait Contravariant<'b, A> {
     where
         'b: 'a,
         A: 'a,
-        F: 'b + Fn(A) -> Self::Consumee;
+        F: 'a + Fn(A) -> Self::Consumee;
 
     /// Same as [`rmap`] but uses a mapping function that takes a mutable
     /// reference
