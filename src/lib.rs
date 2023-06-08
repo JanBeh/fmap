@@ -252,25 +252,24 @@ where
 ///
 /// assert_eq!(output, "Hello: number 13".to_string());
 /// ```
-pub trait Contravariant<'a, A>
-where
-    A: 'a,
-{
+pub trait Contravariant<'b, A> {
     /// Types of values being "consumed" by `Self`
-    type Consumee: 'a;
+    type Consumee: 'b;
 
     /// `Self` but consuming `A` instead of [`Self::Consumee`]
-    type Adapted<'b>
+    type Adapted<'a>
     where
-        'a: 'b;
+        'b: 'a,
+        A: 'a;
 
     /// Returns an adapted version of `Self` with [`Self::Consumee`] replaced
     ///
     /// This method uses an adaption function `f: Fn(A) -> B` to replace
     /// `Self::Consumee = B` with `A`.
-    fn rmap<'b, F>(self, f: F) -> Self::Adapted<'b>
+    fn rmap<'a, F>(self, f: F) -> Self::Adapted<'a>
     where
-        'a: 'b,
+        'b: 'a,
+        A: 'a,
         F: 'b + Fn(A) -> Self::Consumee;
 
     /// Same as [`rmap`] but uses a mapping function that takes a mutable
@@ -279,8 +278,9 @@ where
     /// [`rmap`]: Contravariant::rmap
     fn rmap_fn_mutref<F>(self, f: F) -> Self
     where
-        Self: ContravariantSelf<'a, A>,
-        F: 'a + Fn(&mut Self::Consumee),
+        Self: ContravariantSelf<'b, A>,
+        A: 'b,
+        F: 'b + Fn(&mut Self::Consumee),
     {
         self.rmap(move |mut consumee| {
             f(&mut consumee);

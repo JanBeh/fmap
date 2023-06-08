@@ -83,22 +83,23 @@ macro_rules! fn_impl {
             }
         }
 
-        impl<'a, A, B, R> Contravariant<'a, A>
-            for Box<dyn 'a + $fn(B) -> R>
+        impl<'b, A, B, R> Contravariant<'b, A>
+            for Box<dyn 'b + $fn(B) -> R>
         where
-            A: 'a,
-            B: 'a,
-            R: 'a,
+            B: 'b,
+            R: 'b,
         {
             type Consumee = B;
-            type Adapted<'b>
+            type Adapted<'a>
             where
-                'a: 'b,
+                'b: 'a,
+                A: 'a,
             = Box<dyn 'b + $fn(A) -> R>;
             #[allow(unused_mut)]
-            fn rmap<'b, F>(mut self, f: F) -> Self::Adapted<'b>
+            fn rmap<'a, F>(mut self, f: F) -> Self::Adapted<'a>
             where
-                'a: 'b,
+                'b: 'a,
+                A: 'a,
                 F: 'b + Fn(A) -> Self::Consumee,
             {
                 Box::new(move |consumee| (self)(f(consumee)))
