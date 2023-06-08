@@ -13,6 +13,9 @@
 //!   [`fmap_mut`] method operates on `&mut self`. It is not implemented
 //!   automatically, but this crate provides implementations for all
 //!   types in the standard library for which `Functor` is implemented.
+//! * [`Contravariant`], [`ContravariantSelf`], and [`ContravariantMut`]
+//!   which are the contravariant equivalents of the previous three
+//!   traits.
 //!
 //! [`fmap`]: Functor::fmap
 //! [`fmap_mut`]: FunctorMut::fmap_mut
@@ -24,7 +27,7 @@ mod impls;
 #[cfg(test)]
 mod tests;
 
-/// A generic type (e.g. `T<A>`) whose inner type can be mapped over
+/// Generic type (e.g. `T<A>`) whose inner type can be mapped over
 /// (e.g. resulting in `T<B>`)
 ///
 /// Type parameter `B` specifies the new inner type after the [`fmap`]
@@ -228,4 +231,104 @@ where
     where
         Self: FunctorSelf<'a, A>,
         F: 'a + Fn(&mut Self::Inner);
+}
+
+/// Contravariant functor (e.g. `Sender<B>` which can be converted into
+/// `Sender<A>` by providing an `Fn(A) -> B` to [`rmap`])
+///
+/// [`rmap`]: Self::rmap
+///
+/// # Example
+///
+/// ```
+/// use fmap::Contravariant;
+///
+/// let mut output = String::new();
+/// {
+///     let mut string_printer: Box<dyn FnMut(String)> =
+///         Box::new(|s| {
+///             output.push_str(&s);
+///         });
+///     (string_printer)("Hello: ".to_string());
+///     let mut int_printer: Box<dyn FnMut(i32)> =
+///         string_printer.rmap(|n| format!("number {n}"));
+///     (int_printer)(13);
+/// }
+///
+/// assert_eq!(output, "Hello: number 13".to_string());
+/// ```
+pub trait Contravariant<'a, A>
+where
+    A: 'a,
+{
+    /// Types of values being "consumed" by `Self`
+    type Consumee: 'a;
+
+    /// `Self` but consuming `A` instead of [`Self::Consumee`]
+    type Adapted<'b>
+    where
+        'a: 'b;
+
+    /// Returns an adapted version of `Self` with [`Self::Consumee`]
+    /// replaced
+    ///
+    /// This method uses an adaption function `f: Fn(A) -> B` to replace
+    /// `Self::Consumee = B` with `A`.
+    fn rmap<'b, F>(self, f: F) -> Self::Adapted<'b>
+    where
+        'a: 'b,
+        F: 'b + Fn(A) -> Self::Consumee;
+
+    /// Same as [`rmap`] but uses a mapping function that takes a
+    /// mutable reference
+    ///
+    /// [`rmap`]: Contravariant::rmap
+    fn rmap_fn_mutref<F>(self, f: F) -> Self
+    where
+        Self: ContravariantSelf<'a, A>,
+        F: 'a + Fn(&mut Self::Consumee),
+    {
+        self.rmap(move |mut consumee| {
+            f(&mut consumee);
+            consumee
+        })
+    }
+}
+
+/// A [`Contravariant`] functor where type [`Self::Consumee`] isn't
+/// changed
+///
+/// This trait is automatically implemented but required as bound when
+/// the compiler shall infer that the return type of [`rmap`] is
+/// `Self`.
+///
+/// [`Self::Consumee`]: Contravariant::Consumee
+/// [`rmap`]: Contravariant::rmap
+pub trait ContravariantSelf<'a, A>
+where
+    Self: Sized,
+    Self: Contravariant<'a, A, Consumee = A, Adapted<'a> = Self>,
+    A: 'a,
+{
+}
+
+impl<'a, T, A> ContravariantSelf<'a, A> for T
+where
+    T: Contravariant<'a, A, Consumee = A, Adapted<'a> = T>,
+    A: 'a,
+{
+}
+
+/// Same as [`ContravariantSelf`] but works on `&mut self`
+pub trait ContravariantMut<'a, A>
+where
+    Self: ContravariantSelf<'a, A>,
+    A: 'a,
+{
+    /// Same as [`Contravariant::rmap_fn_mutref`] but works on
+    /// `&mut self`
+    fn rmap_mut<F>(&mut self, f: F)
+    where
+        Self: FunctorSelf<'a, A>,
+        F: 'a + Fn(&mut Self::Consumee);
 }

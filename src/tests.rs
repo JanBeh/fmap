@@ -136,6 +136,82 @@ fn test_boxed_fn() {
 }
 
 #[test]
+fn test_contravariant() {
+    let mut output = String::new();
+    {
+        let mut string_printer: Box<dyn FnMut(String)> =
+            Box::new(|s| {
+                output.push_str(&s);
+            });
+        (string_printer)("Hello: ".to_string());
+        let mut int_printer: Box<dyn FnMut(i32)> =
+            string_printer.rmap(|n| format!("number {n}"));
+        (int_printer)(13);
+    }
+    assert_eq!(output, "Hello: number 13".to_string());
+}
+
+#[test]
+fn test_contravariant_new_impl() {
+    use std::sync::{Arc, Mutex};
+
+    trait Printer<T> {
+        fn print(&self, value: T);
+    }
+
+    struct StringPrinter {
+        output: Arc<Mutex<String>>,
+    }
+    impl Printer<String> for StringPrinter {
+        fn print(&self, value: String) {
+            self.output.lock().unwrap().push_str(&value);
+        }
+    }
+
+    impl<'a> Contravariant<'a, i32> for Box<dyn 'a + Printer<String>> {
+        type Consumee = String;
+        type Adapted<'b> = Box<dyn 'b + Printer<i32>>
+        where
+            'a: 'b;
+        fn rmap<'b, F>(self, f: F) -> Self::Adapted<'b>
+        where
+            'a: 'b,
+            F: 'b + Fn(i32) -> String,
+        {
+            struct IntPrinter<T, F> {
+                string_printer: T,
+                converter: F,
+            }
+            impl<'c, F> Printer<i32>
+                for IntPrinter<Box<dyn 'c + Printer<String>>, F>
+            where
+                F: 'c + Fn(i32) -> String,
+            {
+                fn print(&self, value: i32) {
+                    self.string_printer.print((self.converter)(value))
+                }
+            }
+            Box::new(IntPrinter {
+                string_printer: self,
+                converter: f,
+            })
+        }
+    }
+
+    let output = Arc::new(Mutex::new(String::new()));
+
+    let string_printer: Box<dyn Printer<String>> =
+        Box::new(StringPrinter {
+            output: output.clone(),
+        });
+
+    let int_printer = string_printer.rmap(|i| format!("[int {i}]"));
+    int_printer.print(17);
+
+    assert_eq!(&*output.lock().unwrap(), "[int 17]");
+}
+
+#[test]
 fn test_boxed_iterator() {
     use std::cell::Cell;
     let strings: Vec<String> = vec!["A".to_string(), "B".to_string()];

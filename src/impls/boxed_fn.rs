@@ -80,6 +80,46 @@ macro_rules! fn_impl {
                 *self = this.fmap_fn_mutref(f);
             }
         }
+
+        impl<'a, A, B, R> Contravariant<'a, A>
+            for Box<dyn 'a + $fn(B) -> R>
+        where
+            A: 'a,
+            B: 'a,
+            R: 'a,
+        {
+            type Consumee = B;
+            type Adapted<'b>
+            where
+                'a: 'b,
+            = Box<dyn 'b + $fn(A) -> R>;
+            #[allow(unused_mut)]
+            fn rmap<'b, F>(mut self, f: F) -> Self::Adapted<'b>
+            where
+                'a: 'b,
+                F: 'b + Fn(A) -> Self::Consumee,
+            {
+                Box::new(move |consumee| (self)(f(consumee)))
+            }
+        }
+
+        impl<'a, A, R> ContravariantMut<'a, A>
+            for Box<dyn 'a + $fn(A) -> R>
+        where
+            A: 'a,
+            R: 'a,
+        {
+            fn rmap_mut<F>(&mut self, f: F)
+            where
+                F: 'a + Fn(&mut Self::Consumee),
+            {
+                let this = std::mem::replace(
+                    self,
+                    Box::new(|_| panic!("poisoned ContravariantMut")),
+                );
+                *self = this.rmap_fn_mutref(f);
+            }
+        }
     };
 }
 
