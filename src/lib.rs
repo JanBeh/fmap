@@ -2,20 +2,18 @@
 //!
 //! The following traits are provided by this module:
 //!
-//! * [`Functor`] provides a general [`fmap`] method, which is a
-//!   generalization of [`Option::map`], [`Result::map`], and so on, and
-//!   which is [implemented] for a variety of types in the standard
-//!   library.
-//! * [`FunctorSelf`] is a special case of `Functor` where types aren't
-//!   changed when mapping. It is automatically implemented where
-//!   applicable but must be added as a bound in certain cases.
-//! * [`FunctorMut`] is a special case of `FunctorSelf` whose
-//!   [`fmap_mut`] method operates on `&mut self`. It is not implemented
-//!   automatically, but this crate provides implementations for all
-//!   types in the standard library for which `Functor` is implemented.
-//! * [`Contravariant`], [`ContravariantSelf`], and [`ContravariantMut`]
-//!   which are the contravariant equivalents of the previous three
-//!   traits.
+//! * [`Functor`] provides a general [`fmap`] method, which is a generalization
+//!   of [`Option::map`], [`Result::map`], and so on, and which is
+//!   [implemented] for a variety of types in the standard library.
+//! * [`FunctorSelf`] is a special case of `Functor` where types aren't changed
+//!   when mapping. It is automatically implemented where applicable but must
+//!   be added as a bound in certain cases.
+//! * [`FunctorMut`] is a special case of `FunctorSelf` whose [`fmap_mut`]
+//!   method operates on `&mut self`. It is not implemented automatically, but
+//!   this crate provides implementations for all types in the standard library
+//!   for which `Functor` is implemented.
+//! * [`Contravariant`], [`ContravariantSelf`], and [`ContravariantMut`] which
+//!   are the contravariant equivalents of the previous three traits.
 //!
 //! [`fmap`]: Functor::fmap
 //! [`fmap_mut`]: FunctorMut::fmap_mut
@@ -112,9 +110,8 @@ where
     ///
     /// If `T` has a lifetime parameter, then define like:
     /// `<T<'a, A> as Functor<'a, B>>::Mapped<'b> = T<'b, B>`.
-    /// This allows to shorten the lifetime after lazy mapping
-    /// operations where the mapping closure needs to live at least as
-    /// long as `'b`.
+    /// This allows to shorten the lifetime after lazy mapping operations where
+    /// the mapping closure needs to live at least as long as `'b`.
     ///
     /// [inner type]: Self::Inner
     type Mapped<'b>
@@ -124,25 +121,23 @@ where
     /// Replaces inner type and value by applying a mapping function
     ///
     /// Where [`Self::Inner`] and `B` are the same type, consider using
-    /// [`Functor::fmap_fn_mutref`] or [`FunctorMut::fmap_mut`], which
-    /// might provide specialized implementations that are more
-    /// efficient.
+    /// [`Functor::fmap_fn_mutref`] or [`FunctorMut::fmap_mut`], which might
+    /// provide specialized implementations that are more efficient.
     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         F: 'b + Fn(Self::Inner) -> B;
 
-    /// Same as [`fmap`] but uses a mapping function that takes a
-    /// mutable reference
+    /// Same as [`fmap`] but uses a mapping function that takes a mutable
+    /// reference
     ///
-    /// This method has a default implementation that can be overridden
-    /// if there is a more efficient way of mapping inner values in
-    /// place.
+    /// This method has a default implementation that can be overridden if
+    /// there is a more efficient way of mapping inner values in place.
     /// See also [`FunctorMut::fmap_mut`], which works on `&mut self`.
     ///
     /// For types which implement `FunctorMut` and where `fmap_mut`'s
-    /// implementation doesn't use `fmap_fn_mutref`, consider to provide
-    /// the following implementation:
+    /// implementation doesn't use `fmap_fn_mutref`, consider to provide the
+    /// following implementation:
     ///
     /// ```ignore
     /// fn fmap_fn_mutref<F>(mut self, f: F) -> Self
@@ -169,8 +164,8 @@ where
 
 /// A [`Functor`] which can be mapped from one type to the same type
 ///
-/// This trait is automatically implemented but required as bound when
-/// the compiler shall infer that the return type of [`fmap`] is `Self`.
+/// This trait is automatically implemented but required as bound when the
+/// compiler shall infer that the return type of [`fmap`] is `Self`.
 ///
 /// [`fmap`]: Functor::fmap
 ///
@@ -205,10 +200,9 @@ where
 
 /// Same as [`FunctorSelf`] but works on `&mut self`
 ///
-/// This trait is not automatically implemented. If a type doesn't
-/// implement it but implements [`Functor`], you can always use the
-/// [`Functor::fmap_fn_mutref`] method, which has a default
-/// implementation.
+/// This trait is not automatically implemented. If a type doesn't implement it
+/// but implements [`Functor`], you can always use the
+/// [`Functor::fmap_fn_mutref`] method, which has a default implementation.
 ///
 /// # Example
 ///
@@ -269,8 +263,7 @@ where
     where
         'a: 'b;
 
-    /// Returns an adapted version of `Self` with [`Self::Consumee`]
-    /// replaced
+    /// Returns an adapted version of `Self` with [`Self::Consumee`] replaced
     ///
     /// This method uses an adaption function `f: Fn(A) -> B` to replace
     /// `Self::Consumee = B` with `A`.
@@ -279,8 +272,8 @@ where
         'a: 'b,
         F: 'b + Fn(A) -> Self::Consumee;
 
-    /// Same as [`rmap`] but uses a mapping function that takes a
-    /// mutable reference
+    /// Same as [`rmap`] but uses a mapping function that takes a mutable
+    /// reference
     ///
     /// [`rmap`]: Contravariant::rmap
     fn rmap_fn_mutref<F>(self, f: F) -> Self
@@ -295,12 +288,10 @@ where
     }
 }
 
-/// A [`Contravariant`] functor where type [`Self::Consumee`] isn't
-/// changed
+/// A [`Contravariant`] functor where type [`Self::Consumee`] isn't changed
 ///
-/// This trait is automatically implemented but required as bound when
-/// the compiler shall infer that the return type of [`rmap`] is
-/// `Self`.
+/// This trait is automatically implemented but required as bound when the
+/// compiler shall infer that the return type of [`rmap`] is `Self`.
 ///
 /// [`Self::Consumee`]: Contravariant::Consumee
 /// [`rmap`]: Contravariant::rmap
