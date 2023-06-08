@@ -246,3 +246,24 @@ fn test_fmap_same() {
     x = double(x);
     assert_eq!(x, [2, 4, 6]);
 }
+
+#[test]
+fn test_fmap_cycle_types() {
+    fn cycle_types<'a, 'b, 'c, T, B, F1, F2>(x: T, f1: F1, f2: F2) -> T
+    where
+        'a: 'b,
+        'b: 'c,
+        T: Functor<'a, B>,
+        // complex bound required here:
+        T::Mapped<'b>: Functor<'b, T::Inner, Inner = B, Mapped<'c> = T>,
+        B: 'a,
+        F1: 'b + Fn(T::Inner) -> B,
+        F2: 'c + Fn(B) -> T::Inner,
+    {
+        x.fmap(f1).fmap(f2)
+    }
+    assert_eq!(
+        cycle_types(Some(7), |x| (x + 2) as f64, |x| x as i32 / 2),
+        Some(4)
+    );
+}
