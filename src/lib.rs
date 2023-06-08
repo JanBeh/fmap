@@ -48,15 +48,16 @@ mod tests;
 /// impl<'a, A, B> Functor<'a, B> for Option<A>
 /// where
 ///     A: 'a,
-///     B: 'a,
 /// {
 ///     type Inner = A;
 ///     type Mapped<'b> = Option<B>
 ///     where
-///         'a: 'b;
+///         'a: 'b,
+///         B: 'b;
 ///     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
 ///     where
 ///         'a: 'b,
+///         B: 'b,
 ///         F: 'b + Fn(Self::Inner) -> B,
 ///     {
 ///         self.map(f)
@@ -93,10 +94,7 @@ mod tests;
 /// let float_vec2: Vec<f64> = convert_inner(int_vec2);
 /// assert_eq!(float_vec2, vec![7.0, 11.0, 13.0]);
 /// ```
-pub trait Functor<'a, B>
-where
-    B: 'a,
-{
+pub trait Functor<'a, B> {
     /// Inner type (before mapping)
     ///
     /// For any functor `T`, define like:
@@ -116,7 +114,8 @@ where
     /// [inner type]: Self::Inner
     type Mapped<'b>
     where
-        'a: 'b;
+        'a: 'b,
+        B: 'b;
 
     /// Replaces inner type and value by applying a mapping function
     ///
@@ -126,6 +125,7 @@ where
     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
+        B: 'b,
         F: 'b + Fn(Self::Inner) -> B;
 
     /// Same as [`fmap`] but uses a mapping function that takes a mutable
@@ -153,6 +153,7 @@ where
     fn fmap_fn_mutref<F>(self, f: F) -> Self
     where
         Self: FunctorSelf<'a, B>,
+        B: 'a,
         F: 'a + Fn(&mut Self::Inner),
     {
         self.fmap(move |mut inner| {

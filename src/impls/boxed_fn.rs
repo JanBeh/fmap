@@ -10,17 +10,18 @@ macro_rules! fn_impl {
         impl<'a, A, B> Functor<'a, B> for Box<dyn 'a + $fn() -> A>
         where
             A: 'a,
-            B: 'a,
         {
             type Inner = A;
             type Mapped<'b>
             where
                 'a: 'b,
+                B: 'b,
             = Box<dyn 'b + $fn() -> B>;
             #[allow(unused_mut)]
             fn fmap<'b, F>(mut self, f: F) -> Self::Mapped<'b>
             where
                 'a: 'b,
+                B: 'b,
                 F: 'b + Fn(Self::Inner) -> B,
             {
                 Box::new(move || f((self)()))
@@ -46,18 +47,19 @@ macro_rules! fn_impl {
         impl<'a, A, B, X> Functor<'a, B> for Box<dyn 'a + $fn(X) -> A>
         where
             A: 'a,
-            B: 'a,
             X: 'a,
         {
             type Inner = A;
             type Mapped<'b>
             where
                 'a: 'b,
+                B: 'b,
             = Box<dyn 'b + $fn(X) -> B>;
             #[allow(unused_mut)]
             fn fmap<'b, F>(mut self, f: F) -> Self::Mapped<'b>
             where
                 'a: 'b,
+                B: 'b,
                 F: 'b + Fn(Self::Inner) -> B,
             {
                 Box::new(move |x| f((self)(x)))

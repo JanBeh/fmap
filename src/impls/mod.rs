@@ -8,15 +8,16 @@ mod collections;
 impl<'a, A, B> Functor<'a, B> for Option<A>
 where
     A: 'a,
-    B: 'a,
 {
     type Inner = A;
     type Mapped<'b> = Option<B>
     where
-        'a: 'b;
+        'a: 'b,
+        B: 'b;
     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
+        B: 'b,
         F: 'b + Fn(Self::Inner) -> B,
     {
         self.map(f)
@@ -47,15 +48,16 @@ where
 impl<'a, A, B, E> Functor<'a, B> for Result<A, E>
 where
     A: 'a,
-    B: 'a,
 {
     type Inner = A;
     type Mapped<'b> = Result<B, E>
     where
-        'a: 'b;
+        'a: 'b,
+        B: 'b;
     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
+        B: 'b,
         F: 'b + Fn(Self::Inner) -> B,
     {
         self.map(f)
@@ -86,15 +88,16 @@ where
 impl<'a, A, B> Functor<'a, B> for Vec<A>
 where
     A: 'a,
-    B: 'a,
 {
     type Inner = A;
     type Mapped<'b> = Vec<B>
     where
-        'a: 'b;
+        'a: 'b,
+        B: 'b;
     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
+        B: 'b,
         F: 'b + Fn(Self::Inner) -> B,
     {
         self.into_iter().map(f).collect()
@@ -125,15 +128,16 @@ where
 impl<'a, A, B> Functor<'a, B> for Box<dyn 'a + Iterator<Item = A>>
 where
     A: 'a,
-    B: 'a,
 {
     type Inner = A;
     type Mapped<'b> = Box<dyn 'b + Iterator<Item = B>>
     where
-        'a: 'b;
+        'a: 'b,
+        B: 'b;
     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
+        B: 'b,
         F: 'b + Fn(Self::Inner) -> B,
     {
         Box::new(self.map(f))
