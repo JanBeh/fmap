@@ -102,7 +102,7 @@ where
     /// `<T<A> as Functor<'a, B>>::Inner = A`.
     type Inner: 'a;
 
-    /// `Self` but with inner type mapped to `B`
+    /// `Self` but with [inner type] mapped to `B`
     ///
     /// For any lifetime-free functor `T`, define like:
     /// `<T<A> as Functor<'a, B>>::Mapped<'b> = T<B>`.
@@ -112,13 +112,15 @@ where
     /// This allows to shorten the lifetime after lazy mapping
     /// operations where the mapping closure needs to live at least as
     /// long as `'b`.
+    ///
+    /// [inner type]: Self::Inner
     type Mapped<'b>
     where
         'a: 'b;
 
     /// Replaces inner type and value by applying a mapping function
     ///
-    /// Where `Self::Inner` and `B` are the same type, consider using
+    /// Where [`Self::Inner`] and `B` are the same type, consider using
     /// [`Functor::fmap_fn_mutref`] or [`FunctorMut::fmap_mut`], which
     /// might provide specialized implementations that are more
     /// efficient.
