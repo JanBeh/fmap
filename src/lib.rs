@@ -35,9 +35,6 @@ mod tests;
 /// Type parameter `B` specifies the new inner type after the [`fmap`]
 /// operation.
 ///
-/// The supertrait `ValidFunctor` is implemented automatically as long as the
-/// [`Functor::Mapped`] type implements `Functor` consistently.
-///
 /// [`fmap`]: Self::fmap
 ///
 /// # Examples
@@ -237,10 +234,6 @@ where
 
 /// Contravariant functor (e.g. `Writer<B>` which can be converted into
 /// `Writer<A>` by providing an `Fn(A) -> B` to [`rmap`])
-///
-/// The supertrait `ValidContravariant` is implemented automatically as long as
-/// the [`Contravariant::Adapted`] type implements `Contravariant`
-/// consistently.
 ///
 /// [`rmap`]: Self::rmap
 ///
