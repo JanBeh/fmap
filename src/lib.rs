@@ -2,11 +2,9 @@
 //!
 //! # Functors
 //!
-//! The following traits can be used to work with generic functors:
-//!
-//! * [`Functor`] provides a general [`fmap`] method, which is a generalization
-//!   of [`Option::map`], [`Result::map`], and so on, and which is
-//!   [implemented] for a variety of types in the standard library.
+//! * [`Functor`] is a generic trait that provides an [`fmap`] method, which is
+//!   a generalization of [`Option::map`], [`Result::map`], and so on, and
+//!   which is [implemented] for a variety of types in the standard library.
 //! * [`FunctorSelf`] is a special case of `Functor` where types aren't changed
 //!   when mapping. It is automatically implemented where applicable but must
 //!   be added as a bound in certain cases.
@@ -20,8 +18,6 @@
 //! [implemented]: Functor#foreign-impls
 //!
 //! # Contravariant functors
-//!
-//! The following traits describe contravariant functors:
 //!
 //! * [`Contravariant`] (akin to `Functor`)
 //! * [`ContravariantSelf`] (akin to `FunctorSelf`)
