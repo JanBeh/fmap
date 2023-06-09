@@ -228,8 +228,8 @@ where
         F: 'a + Fn(&mut Self::Inner);
 }
 
-/// Contravariant functor (e.g. `Sender<B>` which can be converted into
-/// `Sender<A>` by providing an `Fn(A) -> B` to [`rmap`])
+/// Contravariant functor (e.g. `Writer<B>` which can be converted into
+/// `Writer<A>` by providing an `Fn(A) -> B` to [`rmap`])
 ///
 /// [`rmap`]: Self::rmap
 ///
