@@ -1,6 +1,8 @@
 //! Functors in Rust
 //!
-//! The following traits are provided by this module:
+//! # Functors
+//!
+//! The following traits can be used to work with generic functors:
 //!
 //! * [`Functor`] provides a general [`fmap`] method, which is a generalization
 //!   of [`Option::map`], [`Result::map`], and so on, and which is
@@ -12,16 +14,28 @@
 //!   method operates on `&mut self`. It is not implemented automatically, but
 //!   this crate provides implementations for all types in the standard library
 //!   for which `Functor` is implemented.
-//! * [`Contravariant`], [`ContravariantSelf`], and [`ContravariantMut`] which
-//!   are the contravariant equivalents of the previous three traits.
 //!
 //! [`fmap`]: Functor::fmap
 //! [`fmap_mut`]: FunctorMut::fmap_mut
 //! [implemented]: Functor#foreign-impls
+//!
+//! # Contravariant functors
+//!
+//! The following traits describe contravariant functors:
+//!
+//! * [`Contravariant`] (akin to `Functor`)
+//! * [`ContravariantSelf`] (akin to `FunctorSelf`)
+//! * [`ContravariantMut`] (akin to `FunctorMut`)
+//!
+//! # Applicative functors
+//!
+//! Applicative functors are described by the [`Applicative`] trait, which
+//! implies [`Pure`].
 
 #![warn(missing_docs)]
 
 mod impls;
+pub mod newtypes;
 #[cfg(test)]
 mod tests;
 
@@ -30,6 +44,9 @@ mod tests;
 ///
 /// Type parameter `B` specifies the new inner type after the [`fmap`]
 /// operation.
+///
+/// The supertrait `ValidFunctor` is implemented automatically as long as the
+/// [`Functor::Mapped`] type implements `Functor` consistently.
 ///
 /// [`fmap`]: Self::fmap
 ///
@@ -231,6 +248,10 @@ where
 /// Contravariant functor (e.g. `Writer<B>` which can be converted into
 /// `Writer<A>` by providing an `Fn(A) -> B` to [`rmap`])
 ///
+/// The supertrait `ValidContravariant` is implemented automatically as long as
+/// the [`Contravariant::Adapted`] type implements `Contravariant`
+/// consistently.
+///
 /// [`rmap`]: Self::rmap
 ///
 /// # Example
@@ -323,4 +344,47 @@ where
     where
         Self: FunctorSelf<'a, A>,
         F: 'a + Fn(&mut Self::Consumee);
+}
+
+/// Type that can statically wrap a value (into a possibly different type)
+pub trait Pure<T> {
+    /// Return type of [`pure`](Self::pure)
+    type Wrapped;
+    /// Wrap value
+    fn pure(x: T) -> Self::Wrapped;
+}
+
+/// Applicative functor, which allows applying a [wrapped] function to an
+/// [inner value]
+///
+/// [wrapped]: Pure
+/// [inner value]: Functor::Inner
+///
+/// # Example
+///
+/// ```
+/// use fmap::Applicative;
+/// use fmap::newtypes::ZipVec;
+///
+/// let funcs = ZipVec(vec![|x| x, |x| 2 * x, |x| 10 * x]);
+/// let numbers = ZipVec(vec![7, 9]);
+/// assert_eq!(numbers.apply(funcs).0, [7, 18]);
+/// ```
+pub trait Applicative<'a, B>
+where
+    Self: Functor<'a, B>,
+    Self: Pure<Self::Inner, Wrapped = Self>,
+{
+    /// Apply a wrapped function to a wrapped value (`self`)
+    fn apply<'b, F>(
+        self,
+        wrapped_func: <Self as Functor<'a, F>>::Mapped<'b>,
+    ) -> <Self as Functor<'a, B>>::Mapped<'b>
+    where
+        Self: Functor<'a, F>,
+        Self: Pure<B, Wrapped = <Self as Functor<'a, B>>::Mapped<'b>>,
+        Self: Pure<F, Wrapped = <Self as Functor<'a, F>>::Mapped<'b>>,
+        'a: 'b,
+        B: 'b,
+        F: 'b + Fn(<Self as Functor<'a, B>>::Inner) -> B;
 }
