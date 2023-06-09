@@ -45,33 +45,6 @@ where
     }
 }
 
-impl<A, B> Pure<B> for Option<A> {
-    type Wrapped = Option<B>;
-    fn pure(b: B) -> Self::Wrapped {
-        Some(b)
-    }
-}
-
-impl<'a, A, B> Applicative<'a, B> for Option<A>
-where
-    A: 'a,
-{
-    fn apply<'b, F>(
-        self,
-        wrapped_func: <Self as Functor<'a, F>>::Mapped<'b>,
-    ) -> <Self as Functor<'a, B>>::Mapped<'b>
-    where
-        'a: 'b,
-        B: 'b,
-        F: 'b + Fn(<Self as Functor<'a, B>>::Inner) -> B,
-    {
-        match (wrapped_func, self) {
-            (Some(func), Some(inner)) => Some(func(inner)),
-            _ => None,
-        }
-    }
-}
-
 impl<'a, A, B, E> Functor<'a, B> for Result<A, E>
 where
     A: 'a,
@@ -109,13 +82,6 @@ where
         if let Ok(inner) = self {
             f(inner);
         }
-    }
-}
-
-impl<A, B, E> Pure<B> for Result<A, E> {
-    type Wrapped = Result<B, E>;
-    fn pure(b: B) -> Self::Wrapped {
-        Ok(b)
     }
 }
 
@@ -159,13 +125,6 @@ where
     }
 }
 
-impl<A, B> Pure<B> for Vec<A> {
-    type Wrapped = Vec<B>;
-    fn pure(b: B) -> Self::Wrapped {
-        vec![b]
-    }
-}
-
 impl<'a, A, B> Functor<'a, B> for Box<dyn 'a + Iterator<Item = A>>
 where
     A: 'a,
@@ -200,15 +159,5 @@ where
             })),
         );
         *self = this.fmap_fn_mutref(f);
-    }
-}
-
-impl<'a, A, B> Pure<B> for Box<dyn 'a + Iterator<Item = A>>
-where
-    B: 'a,
-{
-    type Wrapped = Box<dyn 'a + Iterator<Item = B>>;
-    fn pure(b: B) -> Self::Wrapped {
-        Box::new(std::iter::once(b))
     }
 }
