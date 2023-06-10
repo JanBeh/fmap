@@ -45,7 +45,7 @@ mod tests;
 /// # use fmap::Functor;
 /// # struct Option<T>(T);
 /// # impl<T> Option<T> {
-/// #     pub fn map<U, F: FnOnce(T) -> U>(self, f: F) -> Option<U> {
+/// #     pub fn map<U, F: FnOnce(T) -> U>(self, mut f: F) -> Option<U> {
 /// #         Option(f(self.0))
 /// #     }
 /// # }
@@ -62,7 +62,7 @@ mod tests;
 ///     where
 ///         'a: 'b,
 ///         B: 'b,
-///         F: 'b + Fn(Self::Inner) -> B,
+///         F: 'b + FnMut(Self::Inner) -> B,
 ///     {
 ///         self.map(f)
 ///     }
@@ -130,7 +130,7 @@ pub trait Functor<'a, B> {
     where
         'a: 'b,
         B: 'b,
-        F: 'b + Fn(Self::Inner) -> B;
+        F: 'b + FnMut(Self::Inner) -> B;
 
     /// Same as [`fmap`] but uses a mapping function that takes a mutable
     /// reference
@@ -146,7 +146,7 @@ pub trait Functor<'a, B> {
     /// ```ignore
     /// fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     /// where
-    ///     F: 'a + Fn(&mut Self::Inner),
+    ///     F: 'a + FnMut(&mut Self::Inner),
     /// {
     ///     self.fmap_mut(f);
     ///     self
@@ -154,11 +154,11 @@ pub trait Functor<'a, B> {
     /// ```
     ///
     /// [`fmap`]: Functor::fmap
-    fn fmap_fn_mutref<F>(self, f: F) -> Self
+    fn fmap_fn_mutref<F>(self, mut f: F) -> Self
     where
         Self: FunctorSelf<'a, B>,
         B: 'a,
-        F: 'a + Fn(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::Inner),
     {
         self.fmap(move |mut inner| {
             f(&mut inner);
@@ -229,11 +229,11 @@ where
     fn fmap_mut<F>(&mut self, f: F)
     where
         Self: FunctorSelf<'a, A>,
-        F: 'a + Fn(&mut Self::Inner);
+        F: 'a + FnMut(&mut Self::Inner);
 }
 
 /// Contravariant functor (e.g. `Writer<B>` which can be converted into
-/// `Writer<A>` by providing an `Fn(A) -> B` to [`rmap`])
+/// `Writer<A>` by providing an `FnMut(A) -> B` to [`rmap`])
 ///
 /// [`rmap`]: Self::rmap
 ///
@@ -268,23 +268,23 @@ pub trait Contravariant<'b, A> {
 
     /// Returns an adapted version of `Self` with [`Self::Consumee`] replaced
     ///
-    /// This method uses an adaption function `f: Fn(A) -> B` to replace
+    /// This method uses an adaption function `f: FnMut(A) -> B` to replace
     /// `Self::Consumee = B` with `A`.
     fn rmap<'a, F>(self, f: F) -> Self::Adapted<'a>
     where
         'b: 'a,
         A: 'a,
-        F: 'a + Fn(A) -> Self::Consumee;
+        F: 'a + FnMut(A) -> Self::Consumee;
 
     /// Same as [`rmap`] but uses a mapping function that takes a mutable
     /// reference
     ///
     /// [`rmap`]: Contravariant::rmap
-    fn rmap_fn_mutref<F>(self, f: F) -> Self
+    fn rmap_fn_mutref<F>(self, mut f: F) -> Self
     where
         Self: ContravariantSelf<'b, A>,
         A: 'b,
-        F: 'b + Fn(&mut Self::Consumee),
+        F: 'b + FnMut(&mut Self::Consumee),
     {
         self.rmap(move |mut consumee| {
             f(&mut consumee);
@@ -326,5 +326,5 @@ where
     fn rmap_mut<F>(&mut self, f: F)
     where
         Self: FunctorSelf<'a, A>,
-        F: 'a + Fn(&mut Self::Consumee);
+        F: 'a + FnMut(&mut Self::Consumee);
 }

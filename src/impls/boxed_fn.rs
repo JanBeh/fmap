@@ -18,11 +18,11 @@ macro_rules! fn_impl {
                 B: 'b,
             = Box<dyn 'b + $fn() -> B>;
             #[allow(unused_mut)]
-            fn fmap<'b, F>(mut self, f: F) -> Self::Mapped<'b>
+            fn fmap<'b, F>(mut self, mut f: F) -> Self::Mapped<'b>
             where
                 'a: 'b,
                 B: 'b,
-                F: 'b + Fn(Self::Inner) -> B,
+                F: 'b + FnMut(Self::Inner) -> B,
             {
                 Box::new(move || f((self)()))
             }
@@ -34,7 +34,7 @@ macro_rules! fn_impl {
         {
             fn fmap_mut<F>(&mut self, f: F)
             where
-                F: 'a + Fn(&mut Self::Inner),
+                F: 'a + FnMut(&mut Self::Inner),
             {
                 let this = std::mem::replace(
                     self,
@@ -56,11 +56,11 @@ macro_rules! fn_impl {
                 B: 'b,
             = Box<dyn 'b + $fn(X) -> B>;
             #[allow(unused_mut)]
-            fn fmap<'b, F>(mut self, f: F) -> Self::Mapped<'b>
+            fn fmap<'b, F>(mut self, mut f: F) -> Self::Mapped<'b>
             where
                 'a: 'b,
                 B: 'b,
-                F: 'b + Fn(Self::Inner) -> B,
+                F: 'b + FnMut(Self::Inner) -> B,
             {
                 Box::new(move |x| f((self)(x)))
             }
@@ -73,7 +73,7 @@ macro_rules! fn_impl {
         {
             fn fmap_mut<F>(&mut self, f: F)
             where
-                F: 'a + Fn(&mut Self::Inner),
+                F: 'a + FnMut(&mut Self::Inner),
             {
                 let this = std::mem::replace(
                     self,
@@ -96,11 +96,11 @@ macro_rules! fn_impl {
                 A: 'a,
             = Box<dyn 'a + $fn(A) -> R>;
             #[allow(unused_mut)]
-            fn rmap<'a, F>(mut self, f: F) -> Self::Adapted<'a>
+            fn rmap<'a, F>(mut self, mut f: F) -> Self::Adapted<'a>
             where
                 'b: 'a,
                 A: 'a,
-                F: 'a + Fn(A) -> Self::Consumee,
+                F: 'a + FnMut(A) -> Self::Consumee,
             {
                 Box::new(move |consumee| (self)(f(consumee)))
             }
@@ -114,7 +114,7 @@ macro_rules! fn_impl {
         {
             fn rmap_mut<F>(&mut self, f: F)
             where
-                F: 'a + Fn(&mut Self::Consumee),
+                F: 'a + FnMut(&mut Self::Consumee),
             {
                 let this = std::mem::replace(
                     self,
@@ -128,4 +128,3 @@ macro_rules! fn_impl {
 
 fn_impl!(FnOnce);
 fn_impl!(FnMut);
-fn_impl!(Fn);

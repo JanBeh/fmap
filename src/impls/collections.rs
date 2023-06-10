@@ -23,13 +23,13 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + Fn(Self::Inner) -> B,
+        F: 'b + FnMut(Self::Inner) -> B,
     {
         self.into_iter().map(f).collect()
     }
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + Fn(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::Inner),
     {
         self.fmap_mut(f);
         self
@@ -40,9 +40,9 @@ impl<'a, A> FunctorMut<'a, A> for VecDeque<A>
 where
     A: 'a,
 {
-    fn fmap_mut<F>(&mut self, f: F)
+    fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + Fn(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::Inner),
     {
         for inner in self.iter_mut() {
             f(inner);
@@ -63,13 +63,13 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + Fn(Self::Inner) -> B,
+        F: 'b + FnMut(Self::Inner) -> B,
     {
         self.into_iter().map(f).collect()
     }
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + Fn(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::Inner),
     {
         self.fmap_mut(f);
         self
@@ -80,9 +80,9 @@ impl<'a, A> FunctorMut<'a, A> for LinkedList<A>
 where
     A: 'a,
 {
-    fn fmap_mut<F>(&mut self, f: F)
+    fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + Fn(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::Inner),
     {
         for inner in self.iter_mut() {
             f(inner);
@@ -100,17 +100,17 @@ where
     where
         'a: 'b,
         B: 'b;
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn fmap<'b, F>(self, mut f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         B: 'b,
-        F: 'b + Fn(Self::Inner) -> B,
+        F: 'b + FnMut(Self::Inner) -> B,
     {
         self.into_iter().map(|(k, v)| (k, f(v))).collect()
     }
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + Fn(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::Inner),
     {
         self.fmap_mut(f);
         self
@@ -122,9 +122,9 @@ where
     K: Eq + Hash,
     A: 'a,
 {
-    fn fmap_mut<F>(&mut self, f: F)
+    fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + Fn(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::Inner),
     {
         for (_, inner) in self.iter_mut() {
             f(inner);
@@ -142,17 +142,17 @@ where
     where
         'a: 'b,
         B: 'b;
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn fmap<'b, F>(self, mut f: F) -> Self::Mapped<'b>
     where
         'a: 'b,
         B: 'b,
-        F: 'b + Fn(Self::Inner) -> B,
+        F: 'b + FnMut(Self::Inner) -> B,
     {
         self.into_iter().map(|(k, v)| (k, f(v))).collect()
     }
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + Fn(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::Inner),
     {
         self.fmap_mut(f);
         self
@@ -164,9 +164,9 @@ where
     K: Ord,
     A: 'a,
 {
-    fn fmap_mut<F>(&mut self, f: F)
+    fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + Fn(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::Inner),
     {
         for (_, inner) in self.iter_mut() {
             f(inner);
@@ -188,7 +188,7 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + Fn(Self::Inner) -> B,
+        F: 'b + FnMut(Self::Inner) -> B,
     {
         self.into_iter().map(f).collect()
     }
@@ -200,7 +200,7 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + Fn(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::Inner),
     {
         let this = take(self);
         *self = this.fmap_fn_mutref(f);
@@ -221,7 +221,7 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + Fn(Self::Inner) -> B,
+        F: 'b + FnMut(Self::Inner) -> B,
     {
         self.into_iter().map(f).collect()
     }
@@ -233,7 +233,7 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + Fn(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::Inner),
     {
         let this = take(self);
         *self = this.fmap_fn_mutref(f);
@@ -254,7 +254,7 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + Fn(Self::Inner) -> B,
+        F: 'b + FnMut(Self::Inner) -> B,
     {
         self.into_iter().map(f).collect()
     }
@@ -266,7 +266,7 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + Fn(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::Inner),
     {
         let this = take(self);
         *self = this.fmap_fn_mutref(f);

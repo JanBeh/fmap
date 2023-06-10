@@ -129,7 +129,7 @@ fn test_binary_heap() {
 
 #[test]
 fn test_boxed_fn() {
-    let mut f: Box<dyn Fn() -> String> =
+    let mut f: Box<dyn FnMut() -> String> =
         Box::new(|| "Hello World".to_string());
     f.fmap_mut(|s| s.push('!'));
     assert_eq!(f(), "Hello World!".to_string());
@@ -156,14 +156,14 @@ fn test_contravariant_new_impl() {
     use std::sync::{Arc, Mutex};
 
     trait Printer<T> {
-        fn print(&self, value: T);
+        fn print(&mut self, value: T);
     }
 
     struct StringPrinter {
         output: Arc<Mutex<String>>,
     }
     impl Printer<String> for StringPrinter {
-        fn print(&self, value: String) {
+        fn print(&mut self, value: String) {
             self.output.lock().unwrap().push_str(&value);
         }
     }
@@ -176,7 +176,7 @@ fn test_contravariant_new_impl() {
         fn rmap<'b, F>(self, f: F) -> Self::Adapted<'b>
         where
             'a: 'b,
-            F: 'b + Fn(i32) -> String,
+            F: 'b + FnMut(i32) -> String,
         {
             struct IntPrinter<T, F> {
                 string_printer: T,
@@ -185,9 +185,9 @@ fn test_contravariant_new_impl() {
             impl<'c, F> Printer<i32>
                 for IntPrinter<Box<dyn 'c + Printer<String>>, F>
             where
-                F: 'c + Fn(i32) -> String,
+                F: 'c + FnMut(i32) -> String,
             {
-                fn print(&self, value: i32) {
+                fn print(&mut self, value: i32) {
                     self.string_printer.print((self.converter)(value))
                 }
             }
@@ -205,7 +205,7 @@ fn test_contravariant_new_impl() {
             output: output.clone(),
         });
 
-    let int_printer = string_printer.rmap(|i| format!("[int {i}]"));
+    let mut int_printer = string_printer.rmap(|i| format!("[int {i}]"));
     int_printer.print(17);
 
     assert_eq!(&*output.lock().unwrap(), "[int 17]");
@@ -257,8 +257,8 @@ fn test_fmap_cycle_types() {
         // complex bound required here:
         T::Mapped<'b>: Functor<'b, T::Inner, Inner = B, Mapped<'c> = T>,
         B: 'a,
-        F1: 'b + Fn(T::Inner) -> B,
-        F2: 'c + Fn(B) -> T::Inner,
+        F1: 'b + FnMut(T::Inner) -> B,
+        F2: 'c + FnMut(B) -> T::Inner,
     {
         x.fmap(f1).fmap(f2)
     }
