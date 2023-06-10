@@ -273,7 +273,9 @@ where
         F: 'b + FnMut(Self::Inner) -> Self::Mapped<'b>,
     {
         struct Iter<'a, 'b, A, B> {
-            f: Box<dyn 'b + FnMut(A) -> Box<dyn 'b + Iterator<Item = B>>>,
+            f: Box<
+                dyn 'b + FnMut(A) -> Box<dyn 'b + Iterator<Item = B>>,
+            >,
             outer: Box<dyn 'a + Iterator<Item = A>>,
             inner: Box<dyn 'b + Iterator<Item = B>>,
         }
@@ -281,15 +283,13 @@ where
             type Item = B;
             fn next(&mut self) -> Option<B> {
                 match self.inner.next() {
-                    None => {
-                        match self.outer.next() {
-                            None => None,
-                            Some(a) => {
-                                self.inner = (self.f)(a);
-                                self.inner.next()
-                            }
+                    None => match self.outer.next() {
+                        None => None,
+                        Some(a) => {
+                            self.inner = (self.f)(a);
+                            self.inner.next()
                         }
-                    }
+                    },
                     Some(b) => Some(b),
                 }
             }
