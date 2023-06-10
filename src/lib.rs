@@ -31,8 +31,10 @@
 //! # Monads
 //!
 //! The [`Monad`] trait describes functors which are also monads. Its
-//! supertrait [`Pure`] allows wrapping a single value (equivalent to what's
-//! usually called "return").
+//! supertrait [`Pure`] allows wrapping a single value. ([`Pure::pure`] is
+//! equivalent to what's usually called "return" in the context of monads).
+//! The method [`Monad::bind`] is a generalization of [`Option::and_then`] and
+//! [`Result::and_then`].
 
 #![warn(missing_docs)]
 
@@ -343,9 +345,13 @@ where
 /// A [`Functor`] that provides a [`pure`] operation to wrap a single inner
 /// value
 ///
+/// Use this trait to implement a monad's "return" function.
+///
 /// [`pure`]: Self::pure
 pub trait Pure<'a, B>: Functor<'a, B> {
     /// Wrap single value
+    ///
+    /// This is also called "return" in the context of monads.
     fn pure<'b>(b: B) -> Self::Mapped<'b>
     where
         'a: 'b;
