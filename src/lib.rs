@@ -365,6 +365,9 @@ pub trait Pure<'a, B>: Functor<'a, B> {
 /// let a: Box<dyn Iterator<Item = i32>> = Box::new(vec![5, 6, 7].into_iter());
 /// let b = a.bind(|x| Box::new(vec![2*x, 10*x].into_iter()));
 /// assert_eq!(b.collect::<Vec<_>>(), vec![10, 50, 12, 60, 14, 70]);
+///
+/// let nested = vec![vec![1, 3], vec![2, 9, 9]];
+/// assert_eq!(nested.mjoin(), vec![1, 3, 2, 9, 9]);
 /// ```
 pub trait Monad<'a, B>: Pure<'a, B> {
     /// Call function with [inner values], returning [mapped] version of `Self`
@@ -376,6 +379,19 @@ pub trait Monad<'a, B>: Pure<'a, B> {
         'a: 'b,
         B: 'b,
         F: 'b + FnMut(Self::Inner) -> Self::Mapped<'b>;
+    /// Generic join
+    ///
+    /// `.mjoin()` is equivalent to `.bind(|x| x)`.
+    fn mjoin<'b, A>(self) -> A
+    where
+        Self: Sized,
+        Self: Functor<'a, B, Inner = A, Mapped<'b> = A>,
+        'a: 'b,
+        A: 'a,
+        B: 'b,
+    {
+        self.bind(|x| x)
+    }
 }
 
 /// Default implementation of [`Functor::fmap`] for [`Monad`]s
