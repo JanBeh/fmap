@@ -29,8 +29,8 @@ mod impls;
 #[cfg(test)]
 mod tests;
 
-/// Generic type (e.g. `T<A>`) whose inner type can be mapped over
-/// (e.g. resulting in `T<B>`)
+/// Generic type (e.g. `T<A>`) whose inner type can be mapped (e.g. resulting
+/// in `T<B>`)
 ///
 /// Type parameter `B` specifies the new inner type after the [`fmap`]
 /// operation.
