@@ -267,3 +267,10 @@ fn test_fmap_cycle_types() {
         Some(4)
     );
 }
+
+#[test]
+fn test_monad_fmap() {
+    assert_eq!(monad_fmap(Some(3), |x| 2 * x), Some(6));
+    assert_eq!(monad_fmap(Some(5), |x| x as f64), Some(5.0));
+    assert_eq!(monad_fmap(None, |_: u8| panic!()), None as Option<u16>);
+}

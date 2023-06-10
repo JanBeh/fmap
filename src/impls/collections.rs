@@ -50,6 +50,21 @@ where
     }
 }
 
+impl<'a, A, B> Pure<'a, B> for VecDeque<A>
+where
+    A: 'a,
+{
+    fn pure<'b>(b: B) -> Self::Mapped<'b>
+    where
+        'a: 'b,
+        B: 'b,
+    {
+        let mut this = VecDeque::with_capacity(1);
+        this.push_back(b);
+        this
+    }
+}
+
 impl<'a, A, B> Functor<'a, B> for LinkedList<A>
 where
     A: 'a,
@@ -87,6 +102,21 @@ where
         for inner in self.iter_mut() {
             f(inner);
         }
+    }
+}
+
+impl<'a, A, B> Pure<'a, B> for LinkedList<A>
+where
+    A: 'a,
+{
+    fn pure<'b>(b: B) -> Self::Mapped<'b>
+    where
+        'a: 'b,
+        B: 'b,
+    {
+        let mut this = LinkedList::new();
+        this.push_back(b);
+        this
     }
 }
 
@@ -194,6 +224,22 @@ where
     }
 }
 
+impl<'a, A, B> Pure<'a, B> for HashSet<A>
+where
+    A: Eq + Hash + 'a,
+    B: Eq + Hash,
+{
+    fn pure<'b>(b: B) -> Self::Mapped<'b>
+    where
+        'a: 'b,
+        B: 'b,
+    {
+        let mut this = HashSet::with_capacity(1);
+        this.insert(b);
+        this
+    }
+}
+
 impl<'a, A> FunctorMut<'a, A> for HashSet<A>
 where
     A: 'a + Eq + Hash,
@@ -240,6 +286,22 @@ where
     }
 }
 
+impl<'a, A, B> Pure<'a, B> for BTreeSet<A>
+where
+    A: Ord + 'a,
+    B: Ord,
+{
+    fn pure<'b>(b: B) -> Self::Mapped<'b>
+    where
+        'a: 'b,
+        B: 'b,
+    {
+        let mut this = BTreeSet::new();
+        this.insert(b);
+        this
+    }
+}
+
 impl<'a, A, B> Functor<'a, B> for BinaryHeap<A>
 where
     A: Ord + 'a,
@@ -270,5 +332,21 @@ where
     {
         let this = take(self);
         *self = this.fmap_fn_mutref(f);
+    }
+}
+
+impl<'a, A, B> Pure<'a, B> for BinaryHeap<A>
+where
+    A: Ord + 'a,
+    B: Ord,
+{
+    fn pure<'b>(b: B) -> Self::Mapped<'b>
+    where
+        'a: 'b,
+        B: 'b,
+    {
+        let mut this = BinaryHeap::with_capacity(1);
+        this.push(b);
+        this
     }
 }

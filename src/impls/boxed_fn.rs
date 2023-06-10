@@ -44,6 +44,19 @@ macro_rules! fn_impl {
             }
         }
 
+        impl<'a, A, B> Pure<'a, B> for Box<dyn 'a + $fn() -> A>
+        where
+            A: 'a,
+            B: 'a + Clone,
+        {
+            fn pure<'b>(b: B) -> Self::Mapped<'b>
+            where
+                'a: 'b,
+            {
+                Box::new(move || b.clone())
+            }
+        }
+
         impl<'a, A, B, X> Functor<'a, B> for Box<dyn 'a + $fn(X) -> A>
         where
             A: 'a,
@@ -80,6 +93,20 @@ macro_rules! fn_impl {
                     Box::new(|_| panic!("poisoned FunctorMut")),
                 );
                 *self = this.fmap_fn_mutref(f);
+            }
+        }
+
+        impl<'a, A, B, X> Pure<'a, B> for Box<dyn 'a + $fn(X) -> A>
+        where
+            A: 'a,
+            B: 'a + Clone,
+            X: 'a,
+        {
+            fn pure<'b>(b: B) -> Self::Mapped<'b>
+            where
+                'a: 'b,
+            {
+                Box::new(move |_| b.clone())
             }
         }
 

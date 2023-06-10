@@ -1,6 +1,8 @@
-//! Functors in Rust
+//! Functors and monads in Rust
 //!
 //! # Functors
+//!
+//! The following traits are provided to describe functors:
 //!
 //! * [`Functor`] is a generic trait that provides an [`fmap`] method, which is
 //!   a generalization of [`Option::map`], [`Result::map`], and so on, and
@@ -19,9 +21,18 @@
 //!
 //! # Contravariant functors
 //!
+//! The following traits are provided to describe contravariant functors, e.g.
+//! a `Writer<B>` that can be converted to a `Writer<A>` using an `Fn(A) -> B`.
+//!
 //! * [`Contravariant`] (akin to `Functor`)
 //! * [`ContravariantSelf`] (akin to `FunctorSelf`)
 //! * [`ContravariantMut`] (akin to `FunctorMut`)
+//!
+//! # Monads
+//!
+//! The [`Monad`] trait describes functors which are also monads. Its
+//! supertrait [`Pure`] allows wrapping a single value (equivalent to what's
+//! usually called "return").
 
 #![warn(missing_docs)]
 
@@ -327,4 +338,56 @@ where
     where
         Self: FunctorSelf<'a, A>,
         F: 'a + FnMut(&mut Self::Consumee);
+}
+
+/// A [`Functor`] that provides a [`pure`] operation to wrap a single inner
+/// value
+///
+/// [`pure`]: Self::pure
+pub trait Pure<'a, B>: Functor<'a, B> {
+    /// Wrap single value
+    fn pure<'b>(b: B) -> Self::Mapped<'b>
+    where
+        'a: 'b;
+}
+
+/// A [`Functor`] that is also a monad
+///
+/// # Examples
+///
+/// ```
+/// use fmap::Monad;
+///
+/// let a = vec![5, 6, 7];
+/// let b = a.bind(|x| vec![2*x, 10*x]);
+/// assert_eq!(b, vec![10, 50, 12, 60, 14, 70]);
+///
+/// let a: Box<dyn Iterator<Item = i32>> = Box::new(vec![5, 6, 7].into_iter());
+/// let b = a.bind(|x| Box::new(vec![2*x, 10*x].into_iter()));
+/// assert_eq!(b.collect::<Vec<_>>(), vec![10, 50, 12, 60, 14, 70]);
+/// ```
+pub trait Monad<'a, B>: Pure<'a, B> {
+    /// Call function with [inner values], returning [mapped] version of `Self`
+    ///
+    /// [inner values]: Functor::Inner
+    /// [mapped]: Functor::Mapped
+    fn bind<'b, F>(self, f: F) -> Self::Mapped<'b>
+    where
+        'a: 'b,
+        B: 'b,
+        F: 'b + FnMut(Self::Inner) -> Self::Mapped<'b>;
+}
+
+/// Default implementation of [`Functor::fmap`] for [`Monad`]s
+///
+/// This default implementation for `Functor::fmap` can be used for functors
+/// which are also monads.
+pub fn monad_fmap<'a, 'b, T, B, F>(monad: T, f: F) -> T::Mapped<'b>
+where
+    'a: 'b,
+    T: Monad<'a, B>,
+    B: 'b,
+    F: 'b + Fn(T::Inner) -> B,
+{
+    monad.bind(move |inner| T::pure(f(inner)))
 }
