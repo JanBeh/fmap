@@ -484,12 +484,12 @@ where
 ///
 /// This default implementation for `Functor::fmap` can be used for functors
 /// which are also monads.
-pub fn monad_fmap<'a, 'b, T, B, F>(monad: T, f: F) -> T::Mapped<'b>
+pub fn monad_fmap<'a, 'b, T, B, F>(monad: T, mut f: F) -> T::Mapped<'b>
 where
     'a: 'b,
     T: Monad<'a, B>,
     B: 'b,
-    F: 'b + Fn(T::FmapIn) -> B,
+    F: 'b + FnMut(T::FmapIn) -> B,
 {
     monad.bind(move |inner| T::pure(f(inner)))
 }
