@@ -2,8 +2,6 @@
 
 use super::*;
 
-use std::mem::take;
-
 use std::collections::{
     BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList,
     VecDeque,
@@ -280,7 +278,7 @@ where
     where
         F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
-        let this = take(self);
+        let this = std::mem::take(self);
         *self = this.fmap_fn_mutref(f);
     }
 }
@@ -319,7 +317,7 @@ where
     where
         F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
-        let this = take(self);
+        let this = std::mem::take(self);
         *self = this.fmap_fn_mutref(f);
     }
 }
@@ -374,7 +372,7 @@ where
     where
         F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
-        let this = take(self);
+        let this = std::mem::take(self);
         *self = this.fmap_fn_mutref(f);
     }
 }
