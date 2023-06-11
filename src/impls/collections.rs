@@ -10,11 +10,24 @@ use std::collections::{
 };
 use std::hash::Hash;
 
+impl<'a, A> FunctorSelf<'a> for VecDeque<A>
+where
+    A: 'a,
+{
+    type FmapInOut = A;
+    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    where
+        F: 'a + FnMut(&mut A),
+    {
+        self.fmap_mut(f);
+        self
+    }
+}
+
 impl<'a, A, B> Functor<'a, B> for VecDeque<A>
 where
     A: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = VecDeque<B>
     where
         'a: 'b,
@@ -23,26 +36,19 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> B,
+        F: 'b + FnMut(A) -> B,
     {
         self.into_iter().map(f).collect()
     }
-    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
-    where
-        F: 'a + FnMut(&mut Self::Inner),
-    {
-        self.fmap_mut(f);
-        self
-    }
 }
 
-impl<'a, A> FunctorMut<'a, A> for VecDeque<A>
+impl<'a, A> FunctorMut<'a> for VecDeque<A>
 where
     A: 'a,
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + FnMut(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         for inner in self.iter_mut() {
             f(inner);
@@ -65,11 +71,24 @@ where
     }
 }
 
+impl<'a, A> FunctorSelf<'a> for LinkedList<A>
+where
+    A: 'a,
+{
+    type FmapInOut = A;
+    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    where
+        F: 'a + FnMut(&mut A),
+    {
+        self.fmap_mut(f);
+        self
+    }
+}
+
 impl<'a, A, B> Functor<'a, B> for LinkedList<A>
 where
     A: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = LinkedList<B>
     where
         'a: 'b,
@@ -78,26 +97,19 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> B,
+        F: 'b + FnMut(A) -> B,
     {
         self.into_iter().map(f).collect()
     }
-    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
-    where
-        F: 'a + FnMut(&mut Self::Inner),
-    {
-        self.fmap_mut(f);
-        self
-    }
 }
 
-impl<'a, A> FunctorMut<'a, A> for LinkedList<A>
+impl<'a, A> FunctorMut<'a> for LinkedList<A>
 where
     A: 'a,
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + FnMut(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         for inner in self.iter_mut() {
             f(inner);
@@ -120,12 +132,26 @@ where
     }
 }
 
+impl<'a, K, A> FunctorSelf<'a> for HashMap<K, A>
+where
+    K: Eq + Hash,
+    A: 'a,
+{
+    type FmapInOut = A;
+    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    where
+        F: 'a + FnMut(&mut A),
+    {
+        self.fmap_mut(f);
+        self
+    }
+}
+
 impl<'a, K, A, B> Functor<'a, B> for HashMap<K, A>
 where
     K: Eq + Hash,
     A: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = HashMap<K, B>
     where
         'a: 'b,
@@ -134,31 +160,39 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> B,
+        F: 'b + FnMut(A) -> B,
     {
         self.into_iter().map(|(k, v)| (k, f(v))).collect()
     }
-    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
-    where
-        F: 'a + FnMut(&mut Self::Inner),
-    {
-        self.fmap_mut(f);
-        self
-    }
 }
 
-impl<'a, K, A> FunctorMut<'a, A> for HashMap<K, A>
+impl<'a, K, A> FunctorMut<'a> for HashMap<K, A>
 where
     K: Eq + Hash,
     A: 'a,
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + FnMut(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         for (_, inner) in self.iter_mut() {
             f(inner);
         }
+    }
+}
+
+impl<'a, K, A> FunctorSelf<'a> for BTreeMap<K, A>
+where
+    K: Ord,
+    A: 'a,
+{
+    type FmapInOut = A;
+    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    where
+        F: 'a + FnMut(&mut A),
+    {
+        self.fmap_mut(f);
+        self
     }
 }
 
@@ -167,7 +201,6 @@ where
     K: Ord,
     A: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = BTreeMap<K, B>
     where
         'a: 'b,
@@ -176,27 +209,20 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> B,
+        F: 'b + FnMut(A) -> B,
     {
         self.into_iter().map(|(k, v)| (k, f(v))).collect()
     }
-    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
-    where
-        F: 'a + FnMut(&mut Self::Inner),
-    {
-        self.fmap_mut(f);
-        self
-    }
 }
 
-impl<'a, K, A> FunctorMut<'a, A> for BTreeMap<K, A>
+impl<'a, K, A> FunctorMut<'a> for BTreeMap<K, A>
 where
     K: Ord,
     A: 'a,
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + FnMut(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         for (_, inner) in self.iter_mut() {
             f(inner);
@@ -204,12 +230,18 @@ where
     }
 }
 
+impl<'a, A> FunctorSelf<'a> for HashSet<A>
+where
+    A: 'a + Eq + Hash,
+{
+    type FmapInOut = A;
+}
+
 impl<'a, A, B> Functor<'a, B> for HashSet<A>
 where
     A: Eq + Hash + 'a,
     B: Eq + Hash,
 {
-    type Inner = A;
     type Mapped<'b> = HashSet<B>
     where
         'a: 'b,
@@ -218,7 +250,7 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> B,
+        F: 'b + FnMut(A) -> B,
     {
         self.into_iter().map(f).collect()
     }
@@ -240,17 +272,24 @@ where
     }
 }
 
-impl<'a, A> FunctorMut<'a, A> for HashSet<A>
+impl<'a, A> FunctorMut<'a> for HashSet<A>
 where
     A: 'a + Eq + Hash,
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + FnMut(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         let this = take(self);
         *self = this.fmap_fn_mutref(f);
     }
+}
+
+impl<'a, A> FunctorSelf<'a> for BTreeSet<A>
+where
+    A: 'a + Ord,
+{
+    type FmapInOut = A;
 }
 
 impl<'a, A, B> Functor<'a, B> for BTreeSet<A>
@@ -258,7 +297,6 @@ where
     A: Ord + 'a,
     B: Ord,
 {
-    type Inner = A;
     type Mapped<'b> = BTreeSet<B>
     where
         'a: 'b,
@@ -267,19 +305,19 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> B,
+        F: 'b + FnMut(A) -> B,
     {
         self.into_iter().map(f).collect()
     }
 }
 
-impl<'a, A> FunctorMut<'a, A> for BTreeSet<A>
+impl<'a, A> FunctorMut<'a> for BTreeSet<A>
 where
     A: 'a + Ord,
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + FnMut(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         let this = take(self);
         *self = this.fmap_fn_mutref(f);
@@ -302,12 +340,18 @@ where
     }
 }
 
+impl<'a, A> FunctorSelf<'a> for BinaryHeap<A>
+where
+    A: 'a + Ord,
+{
+    type FmapInOut = A;
+}
+
 impl<'a, A, B> Functor<'a, B> for BinaryHeap<A>
 where
     A: Ord + 'a,
     B: Ord,
 {
-    type Inner = A;
     type Mapped<'b> = BinaryHeap<B>
     where
         'a: 'b,
@@ -316,19 +360,19 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> B,
+        F: 'b + FnMut(A) -> B,
     {
         self.into_iter().map(f).collect()
     }
 }
 
-impl<'a, A> FunctorMut<'a, A> for BinaryHeap<A>
+impl<'a, A> FunctorMut<'a> for BinaryHeap<A>
 where
     A: 'a + Ord,
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + FnMut(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         let this = take(self);
         *self = this.fmap_fn_mutref(f);

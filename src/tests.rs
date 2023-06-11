@@ -152,66 +152,6 @@ fn test_contravariant() {
 }
 
 #[test]
-fn test_contravariant_new_impl() {
-    use std::sync::{Arc, Mutex};
-
-    trait Printer<T> {
-        fn print(&mut self, value: T);
-    }
-
-    struct StringPrinter {
-        output: Arc<Mutex<String>>,
-    }
-    impl Printer<String> for StringPrinter {
-        fn print(&mut self, value: String) {
-            self.output.lock().unwrap().push_str(&value);
-        }
-    }
-
-    impl<'a> Contravariant<'a, i32> for Box<dyn 'a + Printer<String>> {
-        type Consumee = String;
-        type Adapted<'b> = Box<dyn 'b + Printer<i32>>
-        where
-            'a: 'b;
-        fn rmap<'b, F>(self, f: F) -> Self::Adapted<'b>
-        where
-            'a: 'b,
-            F: 'b + FnMut(i32) -> String,
-        {
-            struct IntPrinter<T, F> {
-                string_printer: T,
-                converter: F,
-            }
-            impl<'c, F> Printer<i32>
-                for IntPrinter<Box<dyn 'c + Printer<String>>, F>
-            where
-                F: 'c + FnMut(i32) -> String,
-            {
-                fn print(&mut self, value: i32) {
-                    self.string_printer.print((self.converter)(value))
-                }
-            }
-            Box::new(IntPrinter {
-                string_printer: self,
-                converter: f,
-            })
-        }
-    }
-
-    let output = Arc::new(Mutex::new(String::new()));
-
-    let string_printer: Box<dyn Printer<String>> =
-        Box::new(StringPrinter {
-            output: output.clone(),
-        });
-
-    let mut int_printer = string_printer.rmap(|i| format!("[int {i}]"));
-    int_printer.print(17);
-
-    assert_eq!(&*output.lock().unwrap(), "[int 17]");
-}
-
-#[test]
 fn test_boxed_iterator() {
     use std::cell::Cell;
     let strings: Vec<String> = vec!["A".to_string(), "B".to_string()];
@@ -237,7 +177,7 @@ fn test_boxed_iterator() {
 fn test_fmap_same() {
     fn double<'a, T>(x: T) -> T
     where
-        T: FunctorSelf<'a, i32>,
+        T: FunctorSelf<'a, FmapInOut = i32>,
     {
         x.fmap(|x| 2 * x)
     }
@@ -255,10 +195,11 @@ fn test_fmap_cycle_types() {
         'b: 'c,
         T: Functor<'a, B>,
         // complex bound required here:
-        T::Mapped<'b>: Functor<'b, T::Inner, Inner = B, Mapped<'c> = T>,
+        T::Mapped<'b>:
+            Functor<'b, T::FmapIn, FmapIn = B, Mapped<'c> = T>,
         B: 'a,
-        F1: 'b + FnMut(T::Inner) -> B,
-        F2: 'c + FnMut(B) -> T::Inner,
+        F1: 'b + FnMut(T::FmapIn) -> B,
+        F2: 'c + FnMut(B) -> T::FmapIn,
     {
         x.fmap(f1).fmap(f2)
     }

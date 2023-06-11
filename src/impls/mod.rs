@@ -5,11 +5,24 @@ use super::*;
 mod boxed_fn;
 mod collections;
 
+impl<'a, A> FunctorSelf<'a> for Option<A>
+where
+    A: 'a,
+{
+    type FmapInOut = A;
+    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    where
+        F: 'a + FnMut(&mut A),
+    {
+        self.fmap_mut(f);
+        self
+    }
+}
+
 impl<'a, A, B> Functor<'a, B> for Option<A>
 where
     A: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = Option<B>
     where
         'a: 'b,
@@ -18,26 +31,19 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> B,
+        F: 'b + FnMut(Self::FmapIn) -> B,
     {
         self.map(f)
     }
-    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
-    where
-        F: 'a + FnMut(&mut Self::Inner),
-    {
-        self.fmap_mut(f);
-        self
-    }
 }
 
-impl<'a, A> FunctorMut<'a, A> for Option<A>
+impl<'a, A> FunctorMut<'a> for Option<A>
 where
     A: 'a,
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + FnMut(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         if let Some(inner) = self {
             f(inner);
@@ -66,9 +72,23 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> Self::Mapped<'b>,
+        F: 'b + FnMut(Self::FmapIn) -> Self::Mapped<'b>,
     {
         self.and_then(f)
+    }
+}
+
+impl<'a, A, E> FunctorSelf<'a> for Result<A, E>
+where
+    A: 'a,
+{
+    type FmapInOut = A;
+    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    where
+        F: 'a + FnMut(&mut A),
+    {
+        self.fmap_mut(f);
+        self
     }
 }
 
@@ -76,7 +96,6 @@ impl<'a, A, B, E> Functor<'a, B> for Result<A, E>
 where
     A: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = Result<B, E>
     where
         'a: 'b,
@@ -85,26 +104,19 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> B,
+        F: 'b + FnMut(Self::FmapIn) -> B,
     {
         self.map(f)
     }
-    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
-    where
-        F: 'a + FnMut(&mut Self::Inner),
-    {
-        self.fmap_mut(f);
-        self
-    }
 }
 
-impl<'a, A, E> FunctorMut<'a, A> for Result<A, E>
+impl<'a, A, E> FunctorMut<'a> for Result<A, E>
 where
     A: 'a,
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + FnMut(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         if let Ok(inner) = self {
             f(inner);
@@ -133,9 +145,23 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> Self::Mapped<'b>,
+        F: 'b + FnMut(Self::FmapIn) -> Self::Mapped<'b>,
     {
         self.and_then(f)
+    }
+}
+
+impl<'a, A> FunctorSelf<'a> for Vec<A>
+where
+    A: 'a,
+{
+    type FmapInOut = A;
+    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    where
+        F: 'a + FnMut(&mut A),
+    {
+        self.fmap_mut(f);
+        self
     }
 }
 
@@ -143,7 +169,6 @@ impl<'a, A, B> Functor<'a, B> for Vec<A>
 where
     A: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = Vec<B>
     where
         'a: 'b,
@@ -152,26 +177,19 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> B,
+        F: 'b + FnMut(Self::FmapIn) -> B,
     {
         self.into_iter().map(f).collect()
     }
-    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
-    where
-        F: 'a + FnMut(&mut Self::Inner),
-    {
-        self.fmap_mut(f);
-        self
-    }
 }
 
-impl<'a, A> FunctorMut<'a, A> for Vec<A>
+impl<'a, A> FunctorMut<'a> for Vec<A>
 where
     A: 'a,
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + FnMut(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         for inner in self.iter_mut() {
             f(inner);
@@ -200,7 +218,7 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> Self::Mapped<'b>,
+        F: 'b + FnMut(Self::FmapIn) -> Self::Mapped<'b>,
     {
         let mut vec = Vec::new();
         for item in self.into_iter() {
@@ -212,11 +230,17 @@ where
     }
 }
 
+impl<'a, A> FunctorSelf<'a> for Box<dyn 'a + Iterator<Item = A>>
+where
+    A: 'a,
+{
+    type FmapInOut = A;
+}
+
 impl<'a, A, B> Functor<'a, B> for Box<dyn 'a + Iterator<Item = A>>
 where
     A: 'a,
 {
-    type Inner = A;
     type Mapped<'b> = Box<dyn 'b + Iterator<Item = B>>
     where
         'a: 'b,
@@ -225,19 +249,19 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> B,
+        F: 'b + FnMut(Self::FmapIn) -> B,
     {
         Box::new(self.map(f))
     }
 }
 
-impl<'a, A> FunctorMut<'a, A> for Box<dyn 'a + Iterator<Item = A>>
+impl<'a, A> FunctorMut<'a> for Box<dyn 'a + Iterator<Item = A>>
 where
     A: 'a,
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + FnMut(&mut Self::Inner),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         let this = std::mem::replace(
             self,
@@ -270,7 +294,7 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::Inner) -> Self::Mapped<'b>,
+        F: 'b + FnMut(Self::FmapIn) -> Self::Mapped<'b>,
     {
         struct Iter<'a, 'b, A, B> {
             f: Box<

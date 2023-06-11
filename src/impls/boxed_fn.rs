@@ -7,11 +7,17 @@ use super::*;
 
 macro_rules! fn_impl {
     ($fn:tt) => {
+        impl<'a, A> FunctorSelf<'a> for Box<dyn 'a + $fn() -> A>
+        where
+            A: 'a,
+        {
+            type FmapInOut = A;
+        }
+
         impl<'a, A, B> Functor<'a, B> for Box<dyn 'a + $fn() -> A>
         where
             A: 'a,
         {
-            type Inner = A;
             type Mapped<'b>
             where
                 'a: 'b,
@@ -22,19 +28,19 @@ macro_rules! fn_impl {
             where
                 'a: 'b,
                 B: 'b,
-                F: 'b + FnMut(Self::Inner) -> B,
+                F: 'b + FnMut(Self::FmapIn) -> B,
             {
                 Box::new(move || f((self)()))
             }
         }
 
-        impl<'a, A> FunctorMut<'a, A> for Box<dyn 'a + $fn() -> A>
+        impl<'a, A> FunctorMut<'a> for Box<dyn 'a + $fn() -> A>
         where
             A: 'a,
         {
             fn fmap_mut<F>(&mut self, f: F)
             where
-                F: 'a + FnMut(&mut Self::Inner),
+                F: 'a + FnMut(&mut Self::FmapInOut),
             {
                 let this = std::mem::replace(
                     self,
@@ -57,12 +63,19 @@ macro_rules! fn_impl {
             }
         }
 
+        impl<'a, A, X> FunctorSelf<'a> for Box<dyn 'a + $fn(X) -> A>
+        where
+            A: 'a,
+            X: 'a,
+        {
+            type FmapInOut = A;
+        }
+
         impl<'a, A, B, X> Functor<'a, B> for Box<dyn 'a + $fn(X) -> A>
         where
             A: 'a,
             X: 'a,
         {
-            type Inner = A;
             type Mapped<'b>
             where
                 'a: 'b,
@@ -73,20 +86,20 @@ macro_rules! fn_impl {
             where
                 'a: 'b,
                 B: 'b,
-                F: 'b + FnMut(Self::Inner) -> B,
+                F: 'b + FnMut(Self::FmapIn) -> B,
             {
                 Box::new(move |x| f((self)(x)))
             }
         }
 
-        impl<'a, A, X> FunctorMut<'a, A> for Box<dyn 'a + $fn(X) -> A>
+        impl<'a, A, X> FunctorMut<'a> for Box<dyn 'a + $fn(X) -> A>
         where
             A: 'a,
             X: 'a,
         {
             fn fmap_mut<F>(&mut self, f: F)
             where
-                F: 'a + FnMut(&mut Self::Inner),
+                F: 'a + FnMut(&mut Self::FmapInOut),
             {
                 let this = std::mem::replace(
                     self,
@@ -110,13 +123,21 @@ macro_rules! fn_impl {
             }
         }
 
+        impl<'b, B, R> ContravariantSelf<'b>
+            for Box<dyn 'b + $fn(B) -> R>
+        where
+            B: 'b,
+            R: 'b,
+        {
+            type RmapInOut = B;
+        }
+
         impl<'b, A, B, R> Contravariant<'b, A>
             for Box<dyn 'b + $fn(B) -> R>
         where
             B: 'b,
             R: 'b,
         {
-            type Consumee = B;
             type Adapted<'a>
             where
                 'b: 'a,
@@ -127,13 +148,13 @@ macro_rules! fn_impl {
             where
                 'b: 'a,
                 A: 'a,
-                F: 'a + FnMut(A) -> Self::Consumee,
+                F: 'a + FnMut(A) -> Self::RmapOut,
             {
                 Box::new(move |consumee| (self)(f(consumee)))
             }
         }
 
-        impl<'a, A, R> ContravariantMut<'a, A>
+        impl<'a, A, R> ContravariantMut<'a>
             for Box<dyn 'a + $fn(A) -> R>
         where
             A: 'a,
@@ -141,7 +162,7 @@ macro_rules! fn_impl {
         {
             fn rmap_mut<F>(&mut self, f: F)
             where
-                F: 'a + FnMut(&mut Self::Consumee),
+                F: 'a + FnMut(&mut Self::RmapInOut),
             {
                 let this = std::mem::replace(
                     self,
