@@ -1,6 +1,6 @@
 [package]
 name = "fmap"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Jan Behrens <jbe@magnetkern.de>"]
 edition = "2021"
 description = "Functors in Rust"
