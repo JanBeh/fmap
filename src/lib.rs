@@ -105,7 +105,7 @@ where
     /// ```ignore
     /// fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     /// where
-    ///     F: 'a + FnMut(&mut Self::FmapInOut),
+    ///     F: 'a + Send + FnMut(&mut Self::FmapInOut),
     /// {
     ///     self.fmap_mut(f);
     ///     self
@@ -113,7 +113,7 @@ where
     /// ```
     fn fmap_fn_mutref<F>(self, mut f: F) -> Self
     where
-        F: 'a + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
         self.fmap(move |mut inner| {
             f(&mut inner);
@@ -183,7 +183,7 @@ where
 ///     where
 ///         'a: 'b,
 ///         B: 'b,
-///         F: 'b + FnMut(A) -> B,
+///         F: 'b + Send + FnMut(A) -> B,
 ///     {
 ///         self.map(f)
 ///     }
@@ -246,7 +246,7 @@ pub trait Functor<'a, B>: FunctorInner<'a> {
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::FmapIn) -> B;
+        F: 'b + Send + FnMut(Self::FmapIn) -> B;
 }
 
 /// Same as [`FunctorSelf`] but works on `&mut self`
@@ -273,7 +273,7 @@ pub trait FunctorMut<'a>: FunctorSelf<'a> {
     fn fmap_mut<F>(&mut self, f: F)
     where
         Self: FunctorSelf<'a>,
-        F: 'a + FnMut(&mut Self::FmapInOut);
+        F: 'a + Send + FnMut(&mut Self::FmapInOut);
 }
 
 /// A [`Contravariant`] functor whose [inner type] can stay the same when using
@@ -307,7 +307,7 @@ where
     /// a mutable reference
     fn rmap_fn_mutref<F>(self, mut f: F) -> Self
     where
-        F: 'a + FnMut(&mut Self::RmapInOut),
+        F: 'a + Send + FnMut(&mut Self::RmapInOut),
     {
         self.rmap(move |mut inner| {
             f(&mut inner);
@@ -375,7 +375,7 @@ pub trait Contravariant<'b, A>: ContravariantInner<'b> {
     where
         'b: 'a,
         A: 'a,
-        F: 'a + FnMut(A) -> Self::RmapOut;
+        F: 'a + Send + FnMut(A) -> Self::RmapOut;
 }
 
 /// Same as [`ContravariantSelf`] but works on `&mut self`
@@ -387,7 +387,7 @@ where
     fn rmap_mut<F>(&mut self, f: F)
     where
         Self: FunctorSelf<'a>, // TODO: fixme
-        F: 'a + FnMut(&mut Self::RmapInOut);
+        F: 'a + Send + FnMut(&mut Self::RmapInOut);
 }
 
 /// A [`Functor`] that provides a [`pure`] operation to wrap a single inner
@@ -434,7 +434,7 @@ pub trait Monad<'a, B>: Pure<'a, B> {
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(Self::FmapIn) -> Self::Mapped<'b>;
+        F: 'b + Send + FnMut(Self::FmapIn) -> Self::Mapped<'b>;
 }
 
 /// Nested monad that can be [joined]
@@ -490,7 +490,7 @@ where
     'a: 'b,
     T: Monad<'a, B>,
     B: 'b,
-    F: 'b + FnMut(T::FmapIn) -> B,
+    F: 'b + Send + FnMut(T::FmapIn) -> B,
 {
     monad.bind(move |inner| T::pure(f(inner)))
 }

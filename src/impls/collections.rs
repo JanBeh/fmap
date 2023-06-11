@@ -17,7 +17,7 @@ where
     type FmapInOut = A;
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
         self.fmap_mut(f);
         self
@@ -36,7 +36,7 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(A) -> B,
+        F: 'b + Send + FnMut(A) -> B,
     {
         self.into_iter().map(f).collect()
     }
@@ -48,7 +48,7 @@ where
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
         for inner in self.iter_mut() {
             f(inner);
@@ -78,7 +78,7 @@ where
     type FmapInOut = A;
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
         self.fmap_mut(f);
         self
@@ -97,7 +97,7 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(A) -> B,
+        F: 'b + Send + FnMut(A) -> B,
     {
         self.into_iter().map(f).collect()
     }
@@ -109,7 +109,7 @@ where
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
         for inner in self.iter_mut() {
             f(inner);
@@ -140,7 +140,7 @@ where
     type FmapInOut = A;
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
         self.fmap_mut(f);
         self
@@ -160,7 +160,7 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(A) -> B,
+        F: 'b + Send + FnMut(A) -> B,
     {
         self.into_iter().map(|(k, v)| (k, f(v))).collect()
     }
@@ -173,7 +173,7 @@ where
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
         for (_, inner) in self.iter_mut() {
             f(inner);
@@ -189,7 +189,7 @@ where
     type FmapInOut = A;
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
         self.fmap_mut(f);
         self
@@ -209,7 +209,7 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(A) -> B,
+        F: 'b + Send + FnMut(A) -> B,
     {
         self.into_iter().map(|(k, v)| (k, f(v))).collect()
     }
@@ -222,7 +222,7 @@ where
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
         for (_, inner) in self.iter_mut() {
             f(inner);
@@ -250,7 +250,7 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(A) -> B,
+        F: 'b + Send + FnMut(A) -> B,
     {
         self.into_iter().map(f).collect()
     }
@@ -278,7 +278,7 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
         let this = take(self);
         *self = this.fmap_fn_mutref(f);
@@ -305,7 +305,7 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(A) -> B,
+        F: 'b + Send + FnMut(A) -> B,
     {
         self.into_iter().map(f).collect()
     }
@@ -317,7 +317,7 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
         let this = take(self);
         *self = this.fmap_fn_mutref(f);
@@ -360,7 +360,7 @@ where
     where
         'a: 'b,
         B: 'b,
-        F: 'b + FnMut(A) -> B,
+        F: 'b + Send + FnMut(A) -> B,
     {
         self.into_iter().map(f).collect()
     }
@@ -372,7 +372,7 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::FmapInOut),
     {
         let this = take(self);
         *self = this.fmap_fn_mutref(f);

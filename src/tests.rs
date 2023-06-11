@@ -153,22 +153,22 @@ fn test_contravariant() {
 
 #[test]
 fn test_boxed_iterator() {
-    use std::cell::Cell;
+    use std::sync::Mutex;
     let strings: Vec<String> = vec!["A".to_string(), "B".to_string()];
     let suffix: String = "!".to_string();
     let suffix_ref: &str = &suffix;
     let iter1: Box<dyn Iterator<Item = String> + 'static> =
         Box::new(strings.into_iter());
-    let lazy = Cell::new(true);
+    let lazy = Mutex::new(true);
     let mut iter2: Box<dyn Iterator<Item = String> + '_> =
         iter1.fmap(|mut s| {
-            lazy.set(false);
+            *lazy.lock().unwrap() = false;
             s.push_str(suffix_ref);
             s
         });
-    assert_eq!(lazy.get(), true);
+    assert_eq!(*lazy.lock().unwrap(), true);
     assert_eq!(iter2.next().as_deref(), Some("A!"));
-    assert_eq!(lazy.get(), false);
+    assert_eq!(*lazy.lock().unwrap(), false);
     assert_eq!(iter2.next().as_deref(), Some("B!"));
     assert_eq!(iter2.next().as_deref(), None);
 }
@@ -198,8 +198,8 @@ fn test_fmap_cycle_types() {
         T::Mapped<'b>:
             Functor<'b, T::FmapIn, FmapIn = B, Mapped<'c> = T>,
         B: 'a,
-        F1: 'b + FnMut(T::FmapIn) -> B,
-        F2: 'c + FnMut(B) -> T::FmapIn,
+        F1: 'b + Send + FnMut(T::FmapIn) -> B,
+        F2: 'c + Send + FnMut(B) -> T::FmapIn,
     {
         x.fmap(f1).fmap(f2)
     }

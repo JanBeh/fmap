@@ -28,7 +28,7 @@ macro_rules! fn_impl {
             where
                 'a: 'b,
                 B: 'b,
-                F: 'b + FnMut(Self::FmapIn) -> B,
+                F: 'b + Send + FnMut(Self::FmapIn) -> B,
             {
                 Box::new(move || f((self)()))
             }
@@ -40,7 +40,7 @@ macro_rules! fn_impl {
         {
             fn fmap_mut<F>(&mut self, f: F)
             where
-                F: 'a + FnMut(&mut Self::FmapInOut),
+                F: 'a + Send + FnMut(&mut Self::FmapInOut),
             {
                 let this = std::mem::replace(
                     self,
@@ -86,7 +86,7 @@ macro_rules! fn_impl {
             where
                 'a: 'b,
                 B: 'b,
-                F: 'b + FnMut(Self::FmapIn) -> B,
+                F: 'b + Send + FnMut(Self::FmapIn) -> B,
             {
                 Box::new(move |x| f((self)(x)))
             }
@@ -99,7 +99,7 @@ macro_rules! fn_impl {
         {
             fn fmap_mut<F>(&mut self, f: F)
             where
-                F: 'a + FnMut(&mut Self::FmapInOut),
+                F: 'a + Send + FnMut(&mut Self::FmapInOut),
             {
                 let this = std::mem::replace(
                     self,
@@ -148,7 +148,7 @@ macro_rules! fn_impl {
             where
                 'b: 'a,
                 A: 'a,
-                F: 'a + FnMut(A) -> Self::RmapOut,
+                F: 'a + Send + FnMut(A) -> Self::RmapOut,
             {
                 Box::new(move |consumee| (self)(f(consumee)))
             }
@@ -162,7 +162,7 @@ macro_rules! fn_impl {
         {
             fn rmap_mut<F>(&mut self, f: F)
             where
-                F: 'a + FnMut(&mut Self::RmapInOut),
+                F: 'a + Send + FnMut(&mut Self::RmapInOut),
             {
                 let this = std::mem::replace(
                     self,
