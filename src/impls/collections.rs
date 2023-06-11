@@ -17,7 +17,7 @@ where
     type FmapInOut = A;
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + FnMut(&mut A),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         self.fmap_mut(f);
         self
@@ -78,7 +78,7 @@ where
     type FmapInOut = A;
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + FnMut(&mut A),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         self.fmap_mut(f);
         self
@@ -140,7 +140,7 @@ where
     type FmapInOut = A;
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + FnMut(&mut A),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         self.fmap_mut(f);
         self
@@ -189,7 +189,7 @@ where
     type FmapInOut = A;
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + FnMut(&mut A),
+        F: 'a + FnMut(&mut Self::FmapInOut),
     {
         self.fmap_mut(f);
         self
