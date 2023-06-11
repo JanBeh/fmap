@@ -215,3 +215,11 @@ fn test_monad_fmap() {
     assert_eq!(monad_fmap(Some(5), |x| x as f64), Some(5.0));
     assert_eq!(monad_fmap(None, |_: u8| panic!()), None as Option<u16>);
 }
+
+#[test]
+fn test_future_monad() {
+    use futures::{executor::block_on, future::BoxFuture};
+    let fut1: BoxFuture<'_, i32> = Box::pin(async move { 2 });
+    let fut2 = fut1.bind(|i: i32| Box::pin(async move { i * 7 }));
+    assert_eq!(block_on(fut2), 14);
+}
