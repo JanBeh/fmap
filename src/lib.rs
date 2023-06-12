@@ -400,7 +400,7 @@ where
     /// `&mut self`
     fn contramap_mut<F>(&mut self, f: F)
     where
-        Self: FunctorSelf<'a>, // TODO: fixme
+        Self: ContravariantSelf<'a>,
         F: 'a + Send + FnMut(&mut Self::RmapInOut);
 }
 
