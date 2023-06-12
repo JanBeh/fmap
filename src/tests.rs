@@ -145,7 +145,7 @@ fn test_contravariant() {
             });
         (string_printer)("Hello: ".to_string());
         let mut int_printer: Box<dyn FnMut(i32)> =
-            string_printer.rmap(|n| format!("number {n}"));
+            string_printer.contramap(|n| format!("number {n}"));
         (int_printer)(13);
     }
     assert_eq!(output, "Hello: number 13".to_string());

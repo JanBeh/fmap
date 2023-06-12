@@ -277,14 +277,14 @@ pub trait FunctorMut<'a>: FunctorSelf<'a> {
 }
 
 /// A [`Contravariant`] functor whose [inner type] can stay the same when using
-/// [`rmap`]
+/// [`contramap`]
 ///
 /// This trait must always be implemented for every `Contravariant` and is
 /// explicitly required as bound when the compiler shall infer that the return
-/// type of [`Contravariant::rmap`] is `Self`.
+/// type of [`Contravariant::contramap`] is `Self`.
 ///
 /// [inner type]: Self::RmapInOut
-/// [`rmap`]: Contravariant::rmap
+/// [`contramap`]: Contravariant::contramap
 pub trait ContravariantSelf<'a>
 where
     Self: Sized,
@@ -298,18 +298,18 @@ where
     /// Inner type
     ///
     /// For any contravariant functor `T<B>`, where values of type `B` are
-    /// returned by the [`Contravariant::rmap`] function, set
+    /// returned by the [`Contravariant::contramap`] function, set
     /// `ContravariantSelf::RmapInOut = A`.
     ///
     /// This type is always equal to [`ContravariantInner::RmapOut`].
     type RmapInOut: 'a;
-    /// Same as [`Contravariant::rmap`] but uses a mapping function that takes
-    /// a mutable reference
-    fn rmap_fn_mutref<F>(self, mut f: F) -> Self
+    /// Same as [`Contravariant::contramap`] but uses a mapping function that
+    /// takes a mutable reference
+    fn contramap_fn_mutref<F>(self, mut f: F) -> Self
     where
         F: 'a + Send + FnMut(&mut Self::RmapInOut),
     {
-        self.rmap(move |mut inner| {
+        self.contramap(move |mut inner| {
             f(&mut inner);
             inner
         })
@@ -321,7 +321,7 @@ where
 /// [`RmapOut`]: Self::RmapOut
 pub trait ContravariantInner<'a> {
     /// Inner type before adapting
-    /// (i.e. return value of [`Contravariant::rmap`])
+    /// (i.e. return value of [`Contravariant::contramap`])
     ///
     /// This type is always equal to [`ContravariantSelf::RmapInOut`], but
     /// required due to limitations in Rust's type system.
@@ -336,9 +336,9 @@ where
 }
 
 /// Contravariant functor (e.g. `Writer<B>` which can be converted into
-/// `Writer<A>` by providing an `FnMut(A) -> B` to [`rmap`])
+/// `Writer<A>` by providing an `FnMut(A) -> B` to [`contramap`])
 ///
-/// [`rmap`]: Self::rmap
+/// [`contramap`]: Self::contramap
 ///
 /// # Example
 ///
@@ -353,7 +353,7 @@ where
 ///         });
 ///     (string_printer)("Hello: ".to_string());
 ///     let mut int_printer: Box<dyn FnMut(i32)> =
-///         string_printer.rmap(|n| format!("number {n}"));
+///         string_printer.contramap(|n| format!("number {n}"));
 ///     (int_printer)(13);
 /// }
 ///
@@ -371,7 +371,7 @@ pub trait Contravariant<'b, A>: ContravariantInner<'b> {
     ///
     /// This method uses an adaption function `f: FnMut(A) -> B` to replace
     /// `Self::RmapOut = B` with `A`.
-    fn rmap<'a, F>(self, f: F) -> Self::Adapted<'a>
+    fn contramap<'a, F>(self, f: F) -> Self::Adapted<'a>
     where
         'b: 'a,
         A: 'a,
@@ -383,8 +383,9 @@ pub trait ContravariantMut<'a>
 where
     Self: ContravariantSelf<'a>,
 {
-    /// Same as [`ContravariantSelf::rmap_fn_mutref`] but works on `&mut self`
-    fn rmap_mut<F>(&mut self, f: F)
+    /// Same as [`ContravariantSelf::contramap_fn_mutref`] but works on
+    /// `&mut self`
+    fn contramap_mut<F>(&mut self, f: F)
     where
         Self: FunctorSelf<'a>, // TODO: fixme
         F: 'a + Send + FnMut(&mut Self::RmapInOut);

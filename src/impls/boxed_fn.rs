@@ -144,7 +144,7 @@ macro_rules! fn_impl {
                 A: 'a,
             = Box<dyn 'a + $fn(A) -> R>;
             #[allow(unused_mut)]
-            fn rmap<'a, F>(mut self, mut f: F) -> Self::Adapted<'a>
+            fn contramap<'a, F>(mut self, mut f: F) -> Self::Adapted<'a>
             where
                 'b: 'a,
                 A: 'a,
@@ -160,7 +160,7 @@ macro_rules! fn_impl {
             A: 'a,
             R: 'a,
         {
-            fn rmap_mut<F>(&mut self, f: F)
+            fn contramap_mut<F>(&mut self, f: F)
             where
                 F: 'a + Send + FnMut(&mut Self::RmapInOut),
             {
@@ -168,7 +168,7 @@ macro_rules! fn_impl {
                     self,
                     Box::new(|_| panic!("poisoned ContravariantMut")),
                 );
-                *self = this.rmap_fn_mutref(f);
+                *self = this.contramap_fn_mutref(f);
             }
         }
     };
