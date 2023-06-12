@@ -67,7 +67,7 @@ mod tests;
 /// required as bound when the compiler shall infer that the return type of
 /// [`Functor::fmap`] is `Self`.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// # use fmap::FunctorSelf;
@@ -268,7 +268,7 @@ pub trait Functor<'a, B>: FunctorInner<'a> {
 /// but implements [`Functor`], you can always use the
 /// [`FunctorSelf::fmap_fn_mutref`] method, which has a default implementation.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// # use fmap::FunctorSelf;
@@ -353,7 +353,7 @@ where
 ///
 /// [`contramap`]: Self::contramap
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// use fmap::Contravariant;
