@@ -89,12 +89,7 @@ mod tests;
 pub trait FunctorSelf<'a>
 where
     Self: Sized,
-    Self: Functor<
-        'a,
-        Self::Inner,
-        FmapIn = Self::Inner,
-        Mapped<'a> = Self,
-    >,
+    Self: Functor<'a, Self::Inner, FmapIn = Self::Inner, Mapped = Self>,
 {
     /// Inner type
     ///
@@ -187,16 +182,12 @@ where
 /// impl<'a, A, B> Functor<'a, B> for Option<A>
 /// where
 ///     A: 'a,
+///     B: 'a,
 /// {
-///     type Mapped<'b> = Option<B>
+///     type Mapped = Option<B>;
+///     fn fmap<F>(self, f: F) -> Self::Mapped
 ///     where
-///         'a: 'b,
-///         B: 'b;
-///     fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
-///     where
-///         'a: 'b,
-///         B: 'b,
-///         F: 'b + Send + FnMut(A) -> B,
+///         F: 'a + Send + FnMut(A) -> B,
 ///     {
 ///         self.map(f)
 ///     }
@@ -218,7 +209,7 @@ where
 /// let float_vec: Vec<f64> = int_vec.fmap(Into::into);
 /// assert_eq!(float_vec, vec![2.0, 3.0, 5.0]);
 ///
-/// fn convert_inner<'a, T, A, B>(outer: T) -> T::Mapped<'a>
+/// fn convert_inner<'a, T, A, B>(outer: T) -> T::Mapped
 /// where
 ///     // NOTE: `A` and `B` can be different types. Where `A` and `B`
 ///     // are always the same type, `FunctorSelf` should be used.
@@ -232,22 +223,18 @@ where
 /// let float_vec2: Vec<f64> = convert_inner(int_vec2);
 /// assert_eq!(float_vec2, vec![7.0, 11.0, 13.0]);
 /// ```
-pub trait Functor<'a, B>: FunctorInner<'a> {
+pub trait Functor<'a, B>
+where
+    Self: FunctorInner<'a>,
+    B: 'a,
+{
     /// `Self` but with [inner type] mapped to `B`
     ///
-    /// For any lifetime-free functor `T`, define like:
-    /// `<T<A> as Functor<'a, B>>::Mapped<'b> = T<B>`.
-    ///
-    /// If `T` has a lifetime parameter, then define like:
-    /// `<T<'a, A> as Functor<'a, B>>::Mapped<'b> = T<'b, B>`.
-    /// This allows to shorten the lifetime after lazy mapping operations where
-    /// the mapping closure needs to live at least as long as `'b`.
+    /// For any functor `T`, define like:
+    /// `<T<A> as Functor<'a, B>>::Mapped = T<B>`.
     ///
     /// [inner type]: FunctorSelf::Inner
-    type Mapped<'b>
-    where
-        'a: 'b,
-        B: 'b;
+    type Mapped;
 
     /// Replaces inner type and value by applying a mapping function
     ///
@@ -255,11 +242,9 @@ pub trait Functor<'a, B>: FunctorInner<'a> {
     /// using [`FunctorSelf::fmap_fn_mutref`] or [`FunctorMut::fmap_mut`],
     /// which might provide specialized implementations that are more
     /// efficient.
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn fmap<F>(self, f: F) -> Self::Mapped
     where
-        'a: 'b,
-        B: 'b,
-        F: 'b + Send + FnMut(Self::FmapIn) -> B;
+        F: 'a + Send + FnMut(Self::FmapIn) -> B;
 }
 
 /// Same as [`FunctorSelf`] but works on `&mut self`
@@ -305,7 +290,7 @@ where
         'a,
         Self::Inner,
         ContramapOut = Self::Inner,
-        Adapted<'a> = Self,
+        Adapted = Self,
     >,
 {
     /// Inner type
@@ -372,23 +357,18 @@ where
 ///
 /// assert_eq!(output, "Hello: number 13".to_string());
 /// ```
-pub trait Contravariant<'b, A>: ContravariantInner<'b> {
+pub trait Contravariant<'a, A>: ContravariantInner<'a> {
     /// `Self` but consuming `A` instead of
     /// [`ContravariantInner::ContramapOut`]
-    type Adapted<'a>
-    where
-        'b: 'a,
-        A: 'a;
+    type Adapted;
 
     /// Returns an adapted version of `Self` with
     /// [`ContravariantInner::ContramapOut`] replaced
     ///
     /// This method uses an adaption function `f: FnMut(A) -> B` to replace
     /// `Self::ContramapOut = B` with `A`.
-    fn contramap<'a, F>(self, f: F) -> Self::Adapted<'a>
+    fn contramap<F>(self, f: F) -> Self::Adapted
     where
-        'b: 'a,
-        A: 'a,
         F: 'a + Send + FnMut(A) -> Self::ContramapOut;
 }
 
@@ -411,13 +391,15 @@ where
 /// Use this trait to implement a monad's "return" function.
 ///
 /// [`pure`]: Self::pure
-pub trait Pure<'a, B>: Functor<'a, B> {
+pub trait Pure<'a, B>
+where
+    Self: Functor<'a, B>,
+    B: 'a,
+{
     /// Wrap single value
     ///
     /// This is also called "return" in the context of monads.
-    fn pure<'b>(b: B) -> Self::Mapped<'b>
-    where
-        'a: 'b;
+    fn pure(b: B) -> Self::Mapped;
 }
 
 /// A [`Functor`] that is also a monad
@@ -440,16 +422,18 @@ pub trait Pure<'a, B>: Functor<'a, B> {
 /// ```
 ///
 /// Note: `.bind(|x| x)` is also available as [`NestedMonad::mjoin`]
-pub trait Monad<'a, B>: Pure<'a, B> {
+pub trait Monad<'a, B>
+where
+    Self: Pure<'a, B>,
+    B: 'a,
+{
     /// Call function with [inner values], returning [mapped] version of `Self`
     ///
     /// [inner values]: FunctorInner::FmapIn
     /// [mapped]: Functor::Mapped
-    fn bind<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn bind<F>(self, f: F) -> Self::Mapped
     where
-        'a: 'b,
-        B: 'b,
-        F: 'b + Send + FnMut(Self::FmapIn) -> Self::Mapped<'b>;
+        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped;
 }
 
 /// Nested monad that can be [joined]
@@ -480,7 +464,7 @@ where
         'a,
         <Self::InnerMonad as FunctorSelf<'a>>::Inner,
         FmapIn = Self::Inner,
-        Mapped<'a> = Self::Inner,
+        Mapped = Self::Inner,
     >,
 {
     /// Helper type always equal to [`Self::Inner`]
@@ -507,7 +491,7 @@ where
         'a,
         <Self::Inner as FunctorSelf<'a>>::Inner,
         FmapIn = Self::Inner,
-        Mapped<'a> = Self::Inner,
+        Mapped = Self::Inner,
     >,
 {
     type InnerMonad = Self::Inner;
@@ -521,12 +505,11 @@ where
 /// This generic implementation can be used to define `Functor::fmap` when the
 /// functor is also a monad. A more specific implementation might be more
 /// efficient though.
-pub fn monad_fmap<'a, 'b, T, B, F>(monad: T, mut f: F) -> T::Mapped<'b>
+pub fn monad_fmap<'a, T, B, F>(monad: T, mut f: F) -> T::Mapped
 where
-    'a: 'b,
     T: Monad<'a, B>,
-    B: 'b,
-    F: 'b + Send + FnMut(T::FmapIn) -> B,
+    B: 'a,
+    F: 'a + Send + FnMut(T::FmapIn) -> B,
 {
     monad.bind(move |inner| T::pure(f(inner)))
 }

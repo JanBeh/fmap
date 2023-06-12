@@ -18,16 +18,12 @@ where
 impl<'a, A, B> Functor<'a, B> for Box<dyn 'a + Iterator<Item = A>>
 where
     A: 'a,
+    B: 'a,
 {
-    type Mapped<'b> = Box<dyn 'b + Iterator<Item = B>>
+    type Mapped = Box<dyn 'a + Iterator<Item = B>>;
+    fn fmap<F>(self, f: F) -> Self::Mapped
     where
-        'a: 'b,
-        B: 'b;
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-        B: 'b,
-        F: 'b + Send + FnMut(Self::FmapIn) -> B,
+        F: 'a + Send + FnMut(Self::FmapIn) -> B,
     {
         Box::new(self.map(f))
     }
@@ -36,16 +32,12 @@ impl<'a, A, B> Functor<'a, B>
     for Box<dyn 'a + Iterator<Item = A> + Send>
 where
     A: 'a,
+    B: 'a,
 {
-    type Mapped<'b> = Box<dyn 'b + Iterator<Item = B> + Send>
+    type Mapped = Box<dyn 'a + Iterator<Item = B> + Send>;
+    fn fmap<F>(self, f: F) -> Self::Mapped
     where
-        'a: 'b,
-        B: 'b;
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-        B: 'b,
-        F: 'b + Send + FnMut(Self::FmapIn) -> B,
+        F: 'a + Send + FnMut(Self::FmapIn) -> B,
     {
         Box::new(self.map(f))
     }
@@ -89,25 +81,18 @@ where
 impl<'a, A, B> Pure<'a, B> for Box<dyn 'a + Iterator<Item = A>>
 where
     A: 'a,
+    B: 'a,
 {
-    fn pure<'b>(b: B) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-        B: 'b,
-    {
+    fn pure<'b>(b: B) -> Self::Mapped {
         Box::new(std::iter::once(b))
     }
 }
 impl<'a, A, B> Pure<'a, B> for Box<dyn 'a + Iterator<Item = A> + Send>
 where
     A: 'a,
-    B: Send,
+    B: 'a + Send,
 {
-    fn pure<'b>(b: B) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-        B: 'b,
-    {
+    fn pure(b: B) -> Self::Mapped {
         Box::new(std::iter::once(b))
     }
 }
@@ -115,23 +100,22 @@ where
 impl<'a, A, B> Monad<'a, B> for Box<dyn 'a + Iterator<Item = A>>
 where
     A: 'a,
+    B: 'a,
 {
-    fn bind<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn bind<F>(self, f: F) -> Self::Mapped
     where
-        'a: 'b,
-        B: 'b,
-        F: 'b + Send + FnMut(Self::FmapIn) -> Self::Mapped<'b>,
+        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
     {
-        struct Iter<'a, 'b, A, B> {
+        struct Iter<'a, A, B> {
             f: Box<
-                dyn 'b
+                dyn 'a
                     + Send
-                    + FnMut(A) -> Box<dyn 'b + Iterator<Item = B>>,
+                    + FnMut(A) -> Box<dyn 'a + Iterator<Item = B>>,
             >,
             outer: Box<dyn 'a + Iterator<Item = A>>,
-            inner: Box<dyn 'b + Iterator<Item = B>>,
+            inner: Box<dyn 'a + Iterator<Item = B>>,
         }
-        impl<'a, 'b, A, B> Iterator for Iter<'a, 'b, A, B> {
+        impl<'a, A, B> Iterator for Iter<'a, A, B> {
             type Item = B;
             fn next(&mut self) -> Option<B> {
                 match self.inner.next() {
@@ -156,24 +140,22 @@ where
 impl<'a, A, B> Monad<'a, B> for Box<dyn 'a + Iterator<Item = A> + Send>
 where
     A: 'a,
-    B: Send,
+    B: 'a + Send,
 {
-    fn bind<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn bind<F>(self, f: F) -> Self::Mapped
     where
-        'a: 'b,
-        B: 'b,
-        F: 'b + Send + FnMut(Self::FmapIn) -> Self::Mapped<'b>,
+        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
     {
-        struct Iter<'a, 'b, A, B> {
+        struct Iter<'a, A, B> {
             f: Box<
-                dyn 'b
+                dyn 'a
                     + Send
-                    + FnMut(A) -> Box<dyn 'b + Iterator<Item = B> + Send>,
+                    + FnMut(A) -> Box<dyn 'a + Iterator<Item = B> + Send>,
             >,
             outer: Box<dyn 'a + Iterator<Item = A> + Send>,
-            inner: Box<dyn 'b + Iterator<Item = B> + Send>,
+            inner: Box<dyn 'a + Iterator<Item = B> + Send>,
         }
-        impl<'a, 'b, A, B> Iterator for Iter<'a, 'b, A, B> {
+        impl<'a, A, B> Iterator for Iter<'a, A, B> {
             type Item = B;
             fn next(&mut self) -> Option<B> {
                 match self.inner.next() {

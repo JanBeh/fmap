@@ -189,17 +189,15 @@ fn test_fmap_same() {
 
 #[test]
 fn test_fmap_cycle_types() {
-    fn cycle_types<'a, 'b, 'c, T, B, F1, F2>(x: T, f1: F1, f2: F2) -> T
+    fn cycle_types<'a, T, B, F1, F2>(x: T, f1: F1, f2: F2) -> T
     where
-        'a: 'b,
-        'b: 'c,
         T: Functor<'a, B>,
         // complex bound required here:
-        T::Mapped<'b>:
-            Functor<'b, T::FmapIn, FmapIn = B, Mapped<'c> = T>,
+        T::Mapped:
+            Functor<'a, T::FmapIn, FmapIn = B, Mapped = T>,
         B: 'a,
-        F1: 'b + Send + FnMut(T::FmapIn) -> B,
-        F2: 'c + Send + FnMut(B) -> T::FmapIn,
+        F1: 'a + Send + FnMut(T::FmapIn) -> B,
+        F2: 'a + Send + FnMut(B) -> T::FmapIn,
     {
         x.fmap(f1).fmap(f2)
     }

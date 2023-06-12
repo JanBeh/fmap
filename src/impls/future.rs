@@ -22,16 +22,12 @@ where
 impl<'a, A, B> Functor<'a, B> for Pin<Box<dyn 'a + Future<Output = A>>>
 where
     A: 'a,
+    B: 'a,
 {
-    type Mapped<'b> = Pin<Box<dyn 'b + Future<Output = B>>>
+    type Mapped = Pin<Box<dyn 'a + Future<Output = B>>>;
+    fn fmap<F>(self, mut f: F) -> Self::Mapped
     where
-        'a: 'b,
-        B: 'b;
-    fn fmap<'b, F>(self, mut f: F) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-        B: 'b,
-        F: 'b + Send + FnMut(Self::FmapIn) -> B,
+        F: 'a + Send + FnMut(Self::FmapIn) -> B,
     {
         Box::pin(async move { f(self.await) })
     }
@@ -40,16 +36,12 @@ impl<'a, A, B> Functor<'a, B>
     for Pin<Box<dyn 'a + Future<Output = A> + Send>>
 where
     A: 'a,
+    B: 'a,
 {
-    type Mapped<'b> = Pin<Box<dyn 'b + Future<Output = B> + Send>>
+    type Mapped = Pin<Box<dyn 'a + Future<Output = B> + Send>>;
+    fn fmap<F>(self, mut f: F) -> Self::Mapped
     where
-        'a: 'b,
-        B: 'b;
-    fn fmap<'b, F>(self, mut f: F) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-        B: 'b,
-        F: 'b + Send + FnMut(Self::FmapIn) -> B,
+        F: 'a + Send + FnMut(Self::FmapIn) -> B,
     {
         Box::pin(async move { f(self.await) })
     }
@@ -90,12 +82,9 @@ where
 impl<'a, A, B> Pure<'a, B> for Pin<Box<dyn 'a + Future<Output = A>>>
 where
     A: 'a,
+    B: 'a,
 {
-    fn pure<'b>(b: B) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-        B: 'b,
-    {
+    fn pure(b: B) -> Self::Mapped {
         Box::pin(std::future::ready(b))
     }
 }
@@ -103,13 +92,9 @@ impl<'a, A, B> Pure<'a, B>
     for Pin<Box<dyn 'a + Future<Output = A> + Send>>
 where
     A: 'a,
-    B: Send,
+    B: 'a + Send,
 {
-    fn pure<'b>(b: B) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-        B: 'b,
-    {
+    fn pure(b: B) -> Self::Mapped {
         Box::pin(std::future::ready(b))
     }
 }
@@ -117,12 +102,11 @@ where
 impl<'a, A, B> Monad<'a, B> for Pin<Box<dyn 'a + Future<Output = A>>>
 where
     A: 'a,
+    B: 'a,
 {
-    fn bind<'b, F>(self, mut f: F) -> Self::Mapped<'b>
+    fn bind<F>(self, mut f: F) -> Self::Mapped
     where
-        'a: 'b,
-        B: 'b,
-        F: 'b + Send + FnMut(Self::FmapIn) -> Self::Mapped<'b>,
+        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
     {
         Box::pin(async move { f(self.await).await })
     }
@@ -130,14 +114,12 @@ where
 impl<'a, A, B> Monad<'a, B>
     for Pin<Box<dyn 'a + Future<Output = A> + Send>>
 where
-    A: Send + 'a,
-    B: Send,
+    A: 'a + Send,
+    B: 'a + Send,
 {
-    fn bind<'b, F>(self, mut f: F) -> Self::Mapped<'b>
+    fn bind<F>(self, mut f: F) -> Self::Mapped
     where
-        'a: 'b,
-        B: 'b,
-        F: 'b + Send + FnMut(Self::FmapIn) -> Self::Mapped<'b>,
+        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
     {
         Box::pin(async move { f(self.await).await })
     }

@@ -23,18 +23,13 @@ macro_rules! fn_impl {
         impl<'a, A, B> Functor<'a, B> for Box<dyn 'a + $fn() -> A>
         where
             A: 'a,
+            B: 'a,
         {
-            type Mapped<'b>
-            where
-                'a: 'b,
-                B: 'b,
-            = Box<dyn 'b + $fn() -> B>;
+            type Mapped = Box<dyn 'a + $fn() -> B>;
             #[allow(unused_mut)]
-            fn fmap<'b, F>(mut self, mut f: F) -> Self::Mapped<'b>
+            fn fmap<F>(mut self, mut f: F) -> Self::Mapped
             where
-                'a: 'b,
-                B: 'b,
-                F: 'b + Send + FnMut(Self::FmapIn) -> B,
+                F: 'a + Send + FnMut(Self::FmapIn) -> B,
             {
                 Box::new(move || f((self)()))
             }
@@ -43,18 +38,13 @@ macro_rules! fn_impl {
             for Box<dyn 'a + Send + $fn() -> A>
         where
             A: 'a,
+            B: 'a,
         {
-            type Mapped<'b>
-            where
-                'a: 'b,
-                B: 'b,
-            = Box<dyn 'b + Send + $fn() -> B>;
+            type Mapped = Box<dyn 'a + Send + $fn() -> B>;
             #[allow(unused_mut)]
-            fn fmap<'b, F>(mut self, mut f: F) -> Self::Mapped<'b>
+            fn fmap<F>(mut self, mut f: F) -> Self::Mapped
             where
-                'a: 'b,
-                B: 'b,
-                F: 'b + Send + FnMut(Self::FmapIn) -> B,
+                F: 'a + Send + FnMut(Self::FmapIn) -> B,
             {
                 Box::new(move || f((self)()))
             }
@@ -110,19 +100,14 @@ macro_rules! fn_impl {
         impl<'a, A, B, X> Functor<'a, B> for Box<dyn 'a + $fn(X) -> A>
         where
             A: 'a,
+            B: 'a,
             X: 'a,
         {
-            type Mapped<'b>
-            where
-                'a: 'b,
-                B: 'b,
-            = Box<dyn 'b + $fn(X) -> B>;
+            type Mapped = Box<dyn 'a + $fn(X) -> B>;
             #[allow(unused_mut)]
-            fn fmap<'b, F>(mut self, mut f: F) -> Self::Mapped<'b>
+            fn fmap<F>(mut self, mut f: F) -> Self::Mapped
             where
-                'a: 'b,
-                B: 'b,
-                F: 'b + Send + FnMut(Self::FmapIn) -> B,
+                F: 'a + Send + FnMut(Self::FmapIn) -> B,
             {
                 Box::new(move |x| f((self)(x)))
             }
@@ -131,19 +116,14 @@ macro_rules! fn_impl {
             for Box<dyn 'a + Send + $fn(X) -> A>
         where
             A: 'a,
+            B: 'a,
             X: 'a,
         {
-            type Mapped<'b>
-            where
-                'a: 'b,
-                B: 'b,
-            = Box<dyn 'b + Send + $fn(X) -> B>;
+            type Mapped = Box<dyn 'a + Send + $fn(X) -> B>;
             #[allow(unused_mut)]
-            fn fmap<'b, F>(mut self, mut f: F) -> Self::Mapped<'b>
+            fn fmap<F>(mut self, mut f: F) -> Self::Mapped
             where
-                'a: 'b,
-                B: 'b,
-                F: 'b + Send + FnMut(Self::FmapIn) -> B,
+                F: 'a + Send + FnMut(Self::FmapIn) -> B,
             {
                 Box::new(move |x| f((self)(x)))
             }
@@ -183,60 +163,50 @@ macro_rules! fn_impl {
             }
         }
 
-        impl<'b, B, R> ContravariantSelf<'b>
-            for Box<dyn 'b + $fn(B) -> R>
+        impl<'a, B, R> ContravariantSelf<'a>
+            for Box<dyn 'a + $fn(B) -> R>
         where
-            B: 'b,
-            R: 'b,
+            B: 'a,
+            R: 'a,
         {
             type Inner = B;
         }
-        impl<'b, B, R> ContravariantSelf<'b>
-            for Box<dyn 'b + Send + $fn(B) -> R>
+        impl<'a, B, R> ContravariantSelf<'a>
+            for Box<dyn 'a + Send + $fn(B) -> R>
         where
-            B: 'b,
-            R: 'b,
+            B: 'a,
+            R: 'a,
         {
             type Inner = B;
         }
 
-        impl<'b, A, B, R> Contravariant<'b, A>
-            for Box<dyn 'b + $fn(B) -> R>
+        impl<'a, A, B, R> Contravariant<'a, A>
+            for Box<dyn 'a + $fn(B) -> R>
         where
-            B: 'b,
-            R: 'b,
+            A: 'a,
+            B: 'a,
+            R: 'a,
         {
-            type Adapted<'a>
-            where
-                'b: 'a,
-                A: 'a,
-            = Box<dyn 'a + $fn(A) -> R>;
+            type Adapted = Box<dyn 'a + $fn(A) -> R>;
             #[allow(unused_mut)]
-            fn contramap<'a, F>(mut self, mut f: F) -> Self::Adapted<'a>
+            fn contramap<F>(mut self, mut f: F) -> Self::Adapted
             where
-                'b: 'a,
-                A: 'a,
                 F: 'a + Send + FnMut(A) -> Self::ContramapOut,
             {
                 Box::new(move |consumee| (self)(f(consumee)))
             }
         }
-        impl<'b, A, B, R> Contravariant<'b, A>
-            for Box<dyn 'b + Send + $fn(B) -> R>
+        impl<'a, A, B, R> Contravariant<'a, A>
+            for Box<dyn 'a + Send + $fn(B) -> R>
         where
-            B: 'b,
-            R: 'b,
+            A: 'a,
+            B: 'a,
+            R: 'a,
         {
-            type Adapted<'a>
-            where
-                'b: 'a,
-                A: 'a,
-            = Box<dyn 'a + Send + $fn(A) -> R>;
+            type Adapted = Box<dyn 'a + Send + $fn(A) -> R>;
             #[allow(unused_mut)]
-            fn contramap<'a, F>(mut self, mut f: F) -> Self::Adapted<'a>
+            fn contramap<F>(mut self, mut f: F) -> Self::Adapted
             where
-                'b: 'a,
-                A: 'a,
                 F: 'a + Send + FnMut(A) -> Self::ContramapOut,
             {
                 Box::new(move |consumee| (self)(f(consumee)))
@@ -288,10 +258,7 @@ where
     A: 'a,
     B: 'a,
 {
-    fn pure<'b>(b: B) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-    {
+    fn pure(b: B) -> Self::Mapped {
         Box::new(move || b)
     }
 }
@@ -300,10 +267,7 @@ where
     A: 'a,
     B: 'a + Send,
 {
-    fn pure<'b>(b: B) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-    {
+    fn pure(b: B) -> Self::Mapped {
         Box::new(move || b)
     }
 }
@@ -314,10 +278,7 @@ where
     B: 'a,
     X: 'a,
 {
-    fn pure<'b>(b: B) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-    {
+    fn pure(b: B) -> Self::Mapped {
         Box::new(move |_| b)
     }
 }
@@ -327,10 +288,7 @@ where
     B: 'a + Send,
     X: 'a,
 {
-    fn pure<'b>(b: B) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-    {
+    fn pure(b: B) -> Self::Mapped {
         Box::new(move |_| b)
     }
 }
@@ -340,10 +298,7 @@ where
     A: 'a,
     B: 'a + Clone,
 {
-    fn pure<'b>(b: B) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-    {
+    fn pure(b: B) -> Self::Mapped {
         Box::new(move || b.clone())
     }
 }
@@ -352,10 +307,7 @@ where
     A: 'a,
     B: 'a + Clone + Send,
 {
-    fn pure<'b>(b: B) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-    {
+    fn pure(b: B) -> Self::Mapped {
         Box::new(move || b.clone())
     }
 }
@@ -366,10 +318,7 @@ where
     B: 'a + Clone,
     X: 'a,
 {
-    fn pure<'b>(b: B) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-    {
+    fn pure(b: B) -> Self::Mapped {
         Box::new(move |_| b.clone())
     }
 }
@@ -379,10 +328,7 @@ where
     B: 'a + Clone + Send,
     X: 'a,
 {
-    fn pure<'b>(b: B) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-    {
+    fn pure(b: B) -> Self::Mapped {
         Box::new(move |_| b.clone())
     }
 }

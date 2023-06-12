@@ -19,16 +19,12 @@ where
 impl<'a, A, B, E> Functor<'a, B> for Result<A, E>
 where
     A: 'a,
+    B: 'a,
 {
-    type Mapped<'b> = Result<B, E>
+    type Mapped = Result<B, E>;
+    fn fmap<'b, F>(self, f: F) -> Self::Mapped
     where
-        'a: 'b,
-        B: 'b;
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-        B: 'b,
-        F: 'b + Send + FnMut(Self::FmapIn) -> B,
+        F: 'a + Send + FnMut(Self::FmapIn) -> B,
     {
         self.map(f)
     }
@@ -51,12 +47,9 @@ where
 impl<'a, A, B, E> Pure<'a, B> for Result<A, E>
 where
     A: 'a,
+    B: 'a,
 {
-    fn pure<'b>(b: B) -> Self::Mapped<'b>
-    where
-        'a: 'b,
-        B: 'b,
-    {
+    fn pure(b: B) -> Self::Mapped {
         Ok(b)
     }
 }
@@ -64,12 +57,11 @@ where
 impl<'a, A, B, E> Monad<'a, B> for Result<A, E>
 where
     A: 'a,
+    B: 'a,
 {
-    fn bind<'b, F>(self, f: F) -> Self::Mapped<'b>
+    fn bind<F>(self, f: F) -> Self::Mapped
     where
-        'a: 'b,
-        B: 'b,
-        F: 'b + Send + FnMut(Self::FmapIn) -> Self::Mapped<'b>,
+        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
     {
         self.and_then(f)
     }
