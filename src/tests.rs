@@ -177,7 +177,7 @@ fn test_boxed_iterator() {
 fn test_fmap_same() {
     fn double<'a, T>(x: T) -> T
     where
-        T: FunctorSelf<'a, FmapInOut = i32>,
+        T: FunctorSelf<'a, Inner = i32>,
     {
         x.fmap(|x| 2 * x)
     }
@@ -226,10 +226,10 @@ fn test_future_monad() {
 
 #[test]
 fn test_nested_monad_trait() {
-    fn func1<'a, T: NestedMonad<'a>>(x: T) -> T::FmapInOut {
+    fn func1<'a, T: NestedMonad<'a>>(x: T) -> T::Inner {
         x.bind(|x| x)
     }
-    fn func2<'a, T: NestedMonad<'a>>(x: T) -> T::FmapInOut {
+    fn func2<'a, T: NestedMonad<'a>>(x: T) -> T::Inner {
         x.mjoin()
     }
     let nested = vec![vec![1, 3], vec![2, 9, 9]];

@@ -12,10 +12,10 @@ impl<'a, A> FunctorSelf<'a> for VecDeque<A>
 where
     A: 'a,
 {
-    type FmapInOut = A;
+    type Inner = A;
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         self.fmap_mut(f);
         self
@@ -46,7 +46,7 @@ where
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         for inner in self.iter_mut() {
             f(inner);
@@ -73,10 +73,10 @@ impl<'a, A> FunctorSelf<'a> for LinkedList<A>
 where
     A: 'a,
 {
-    type FmapInOut = A;
+    type Inner = A;
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         self.fmap_mut(f);
         self
@@ -107,7 +107,7 @@ where
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         for inner in self.iter_mut() {
             f(inner);
@@ -135,10 +135,10 @@ where
     K: Eq + Hash,
     A: 'a,
 {
-    type FmapInOut = A;
+    type Inner = A;
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         self.fmap_mut(f);
         self
@@ -171,7 +171,7 @@ where
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         for (_, inner) in self.iter_mut() {
             f(inner);
@@ -184,10 +184,10 @@ where
     K: Ord,
     A: 'a,
 {
-    type FmapInOut = A;
+    type Inner = A;
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         self.fmap_mut(f);
         self
@@ -220,7 +220,7 @@ where
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         for (_, inner) in self.iter_mut() {
             f(inner);
@@ -232,7 +232,7 @@ impl<'a, A> FunctorSelf<'a> for HashSet<A>
 where
     A: 'a + Eq + Hash,
 {
-    type FmapInOut = A;
+    type Inner = A;
 }
 
 impl<'a, A, B> Functor<'a, B> for HashSet<A>
@@ -276,7 +276,7 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         let this = std::mem::take(self);
         *self = this.fmap_fn_mutref(f);
@@ -287,7 +287,7 @@ impl<'a, A> FunctorSelf<'a> for BTreeSet<A>
 where
     A: 'a + Ord,
 {
-    type FmapInOut = A;
+    type Inner = A;
 }
 
 impl<'a, A, B> Functor<'a, B> for BTreeSet<A>
@@ -315,7 +315,7 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         let this = std::mem::take(self);
         *self = this.fmap_fn_mutref(f);
@@ -342,7 +342,7 @@ impl<'a, A> FunctorSelf<'a> for BinaryHeap<A>
 where
     A: 'a + Ord,
 {
-    type FmapInOut = A;
+    type Inner = A;
 }
 
 impl<'a, A, B> Functor<'a, B> for BinaryHeap<A>
@@ -370,7 +370,7 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         let this = std::mem::take(self);
         *self = this.fmap_fn_mutref(f);

@@ -11,13 +11,13 @@ macro_rules! fn_impl {
         where
             A: 'a,
         {
-            type FmapInOut = A;
+            type Inner = A;
         }
         impl<'a, A> FunctorSelf<'a> for Box<dyn 'a + Send + $fn() -> A>
         where
             A: 'a,
         {
-            type FmapInOut = A;
+            type Inner = A;
         }
 
         impl<'a, A, B> Functor<'a, B> for Box<dyn 'a + $fn() -> A>
@@ -66,7 +66,7 @@ macro_rules! fn_impl {
         {
             fn fmap_mut<F>(&mut self, f: F)
             where
-                F: 'a + Send + FnMut(&mut Self::FmapInOut),
+                F: 'a + Send + FnMut(&mut Self::Inner),
             {
                 let this = std::mem::replace(
                     self,
@@ -81,7 +81,7 @@ macro_rules! fn_impl {
         {
             fn fmap_mut<F>(&mut self, f: F)
             where
-                F: 'a + Send + FnMut(&mut Self::FmapInOut),
+                F: 'a + Send + FnMut(&mut Self::Inner),
             {
                 let this = std::mem::replace(
                     self,
@@ -96,7 +96,7 @@ macro_rules! fn_impl {
             A: 'a,
             X: 'a,
         {
-            type FmapInOut = A;
+            type Inner = A;
         }
         impl<'a, A, X> FunctorSelf<'a>
             for Box<dyn 'a + Send + $fn(X) -> A>
@@ -104,7 +104,7 @@ macro_rules! fn_impl {
             A: 'a,
             X: 'a,
         {
-            type FmapInOut = A;
+            type Inner = A;
         }
 
         impl<'a, A, B, X> Functor<'a, B> for Box<dyn 'a + $fn(X) -> A>
@@ -156,7 +156,7 @@ macro_rules! fn_impl {
         {
             fn fmap_mut<F>(&mut self, f: F)
             where
-                F: 'a + Send + FnMut(&mut Self::FmapInOut),
+                F: 'a + Send + FnMut(&mut Self::Inner),
             {
                 let this = std::mem::replace(
                     self,
@@ -173,7 +173,7 @@ macro_rules! fn_impl {
         {
             fn fmap_mut<F>(&mut self, f: F)
             where
-                F: 'a + Send + FnMut(&mut Self::FmapInOut),
+                F: 'a + Send + FnMut(&mut Self::Inner),
             {
                 let this = std::mem::replace(
                     self,
@@ -189,7 +189,7 @@ macro_rules! fn_impl {
             B: 'b,
             R: 'b,
         {
-            type RmapInOut = B;
+            type Inner = B;
         }
         impl<'b, B, R> ContravariantSelf<'b>
             for Box<dyn 'b + Send + $fn(B) -> R>
@@ -197,7 +197,7 @@ macro_rules! fn_impl {
             B: 'b,
             R: 'b,
         {
-            type RmapInOut = B;
+            type Inner = B;
         }
 
         impl<'b, A, B, R> Contravariant<'b, A>
@@ -251,7 +251,7 @@ macro_rules! fn_impl {
         {
             fn contramap_mut<F>(&mut self, f: F)
             where
-                F: 'a + Send + FnMut(&mut Self::RmapInOut),
+                F: 'a + Send + FnMut(&mut Self::Inner),
             {
                 let this = std::mem::replace(
                     self,
@@ -268,7 +268,7 @@ macro_rules! fn_impl {
         {
             fn contramap_mut<F>(&mut self, f: F)
             where
-                F: 'a + Send + FnMut(&mut Self::RmapInOut),
+                F: 'a + Send + FnMut(&mut Self::Inner),
             {
                 let this = std::mem::replace(
                     self,

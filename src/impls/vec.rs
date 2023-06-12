@@ -6,10 +6,10 @@ impl<'a, A> FunctorSelf<'a> for Vec<A>
 where
     A: 'a,
 {
-    type FmapInOut = A;
+    type Inner = A;
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         self.fmap_mut(f);
         self
@@ -40,7 +40,7 @@ where
 {
     fn fmap_mut<F>(&mut self, mut f: F)
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         for inner in self.iter_mut() {
             f(inner);

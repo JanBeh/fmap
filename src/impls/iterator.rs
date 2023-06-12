@@ -6,13 +6,13 @@ impl<'a, A> FunctorSelf<'a> for Box<dyn 'a + Iterator<Item = A>>
 where
     A: 'a,
 {
-    type FmapInOut = A;
+    type Inner = A;
 }
 impl<'a, A> FunctorSelf<'a> for Box<dyn 'a + Iterator<Item = A> + Send>
 where
     A: 'a,
 {
-    type FmapInOut = A;
+    type Inner = A;
 }
 
 impl<'a, A, B> Functor<'a, B> for Box<dyn 'a + Iterator<Item = A>>
@@ -57,7 +57,7 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         let this = std::mem::replace(
             self,
@@ -74,7 +74,7 @@ where
 {
     fn fmap_mut<F>(&mut self, f: F)
     where
-        F: 'a + Send + FnMut(&mut Self::FmapInOut),
+        F: 'a + Send + FnMut(&mut Self::Inner),
     {
         let this = std::mem::replace(
             self,
