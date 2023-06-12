@@ -193,8 +193,7 @@ fn test_fmap_cycle_types() {
     where
         T: Functor<'a, B>,
         // complex bound required here:
-        T::Mapped:
-            Functor<'a, T::FmapIn, FmapIn = B, Mapped = T>,
+        T::Mapped: Functor<'a, T::FmapIn, FmapIn = B, Mapped = T>,
         B: 'a,
         F1: 'a + Send + FnMut(T::FmapIn) -> B,
         F2: 'a + Send + FnMut(B) -> T::FmapIn,
