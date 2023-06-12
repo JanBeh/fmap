@@ -434,11 +434,11 @@ pub trait Pure<'a, B>: Functor<'a, B> {
 /// let b = a.bind(|x| Box::new(vec![2*x, 10*x].into_iter()));
 /// assert_eq!(b.collect::<Vec<_>>(), vec![10, 50, 12, 60, 14, 70]);
 ///
-/// use fmap::NestedMonad;
-///
 /// let nested = vec![vec![1, 3], vec![2, 9, 9]];
-/// assert_eq!(nested.mjoin(), vec![1, 3, 2, 9, 9]);
+/// assert_eq!(nested.bind(|x| x), vec![1, 3, 2, 9, 9]);
 /// ```
+///
+/// Note: `.bind(|x| x)` is also available as [`NestedMonad::mjoin`]
 pub trait Monad<'a, B>: Pure<'a, B> {
     /// Call function with [inner values], returning [mapped] version of `Self`
     ///
@@ -457,6 +457,20 @@ pub trait Monad<'a, B>: Pure<'a, B> {
 /// `T: Monad<'a, B, FmapIn = T<B>>`.
 ///
 /// [joined]: Self::mjoin
+///
+/// # Examples
+///
+/// ```
+/// use fmap::NestedMonad;
+///
+/// fn my_mjoin<'a, M: NestedMonad<'a>>(m: M) -> M::FmapInOut {
+///     m.bind(|x| x)
+/// }
+///
+/// let nested = vec![vec![1, 3], vec![2, 9, 9]];
+/// assert_eq!(my_mjoin(nested.clone()), vec![1, 3, 2, 9, 9]);
+/// assert_eq!(nested.mjoin(), vec![1, 3, 2, 9, 9]);
+/// ```
 pub trait NestedMonad<'a>
 where
     Self: Monad<'a, <Self::InnerMonad as FunctorSelf<'a>>::FmapInOut>,
