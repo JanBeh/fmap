@@ -38,8 +38,21 @@
 //! supertrait [`Pure`] allows wrapping a single value. ([`Pure::pure`] is
 //! equivalent to what's usually called "return" in the context of monads).
 //! The method [`Monad::bind`] is a generalization of [`Option::and_then`] and
-//! [`Result::and_then`]. Nested monads automatically implement [`NestedMonad`]
-//! and can be joined with [`NestedMonad::mjoin`].
+//! [`Result::and_then`].
+//!
+//! Pinned boxed [`Future`]s are also monads. The `bind` method will call the
+//! given closure on completion of the future.
+//!
+//! *Note:* This implementation doesn't require [`Future::Output`] to be a
+//! [`Result`] and it will thus not short-circuit when a [`Result::Err`] is
+//! returned. Therefore, it rather behaves like `.then` (instead of
+//! `.and_then`) on futures.
+//!
+//! Nested monads automatically implement [`NestedMonad`] and can be joined
+//! with [`NestedMonad::mjoin`], which is equivalent to `.bind(|x| x)`.
+//!
+//! [`Future`]: std::future::Future
+//! [`Future::Output`]: std::future::Future::Output
 
 #![warn(missing_docs)]
 
