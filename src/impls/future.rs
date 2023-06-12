@@ -5,8 +5,7 @@ use super::*;
 use std::future::Future;
 use std::pin::Pin;
 
-impl<'a, A> FunctorSelf<'a>
-    for Pin<Box<dyn 'a + Future<Output = A>>>
+impl<'a, A> FunctorSelf<'a> for Pin<Box<dyn 'a + Future<Output = A>>>
 where
     A: 'a,
 {
@@ -20,8 +19,7 @@ where
     type FmapInOut = A;
 }
 
-impl<'a, A, B> Functor<'a, B>
-    for Pin<Box<dyn 'a + Future<Output = A>>>
+impl<'a, A, B> Functor<'a, B> for Pin<Box<dyn 'a + Future<Output = A>>>
 where
     A: 'a,
 {
@@ -57,8 +55,7 @@ where
     }
 }
 
-impl<'a, A> FunctorMut<'a>
-    for Pin<Box<dyn 'a + Future<Output = A>>>
+impl<'a, A> FunctorMut<'a> for Pin<Box<dyn 'a + Future<Output = A>>>
 where
     A: 'a,
 {
@@ -90,8 +87,7 @@ where
     }
 }
 
-impl<'a, A, B> Pure<'a, B>
-    for Pin<Box<dyn 'a + Future<Output = A>>>
+impl<'a, A, B> Pure<'a, B> for Pin<Box<dyn 'a + Future<Output = A>>>
 where
     A: 'a,
 {
@@ -118,8 +114,7 @@ where
     }
 }
 
-impl<'a, A, B> Monad<'a, B>
-    for Pin<Box<dyn 'a + Future<Output = A>>>
+impl<'a, A, B> Monad<'a, B> for Pin<Box<dyn 'a + Future<Output = A>>>
 where
     A: 'a,
 {
