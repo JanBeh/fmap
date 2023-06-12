@@ -304,7 +304,7 @@ where
     Self: Contravariant<
         'a,
         Self::Inner,
-        RmapOut = Self::Inner,
+        ContramapOut = Self::Inner,
         Adapted<'a> = Self,
     >,
 {
@@ -314,7 +314,7 @@ where
     /// returned by the [`Contravariant::contramap`] function, set
     /// `ContravariantSelf::Inner = A`.
     ///
-    /// This type is always equal to [`ContravariantInner::RmapOut`].
+    /// This type is always equal to [`ContravariantInner::ContramapOut`].
     type Inner: 'a;
     /// Same as [`Contravariant::contramap`] but uses a mapping function that
     /// takes a mutable reference
@@ -329,23 +329,23 @@ where
     }
 }
 
-/// Automatically implemented helper trait providing the [`RmapOut`] type
+/// Automatically implemented helper trait providing the [`ContramapOut`] type
 ///
-/// [`RmapOut`]: Self::RmapOut
+/// [`ContramapOut`]: Self::ContramapOut
 pub trait ContravariantInner<'a> {
     /// Inner type before adapting
     /// (i.e. return value of [`Contravariant::contramap`])
     ///
     /// This type is always equal to [`ContravariantSelf::Inner`], but
     /// required due to limitations in Rust's type system.
-    type RmapOut: 'a;
+    type ContramapOut: 'a;
 }
 
 impl<'a, T> ContravariantInner<'a> for T
 where
     T: ContravariantSelf<'a>,
 {
-    type RmapOut = T::Inner;
+    type ContramapOut = T::Inner;
 }
 
 /// Contravariant functor (e.g. `Writer<B>` which can be converted into
@@ -373,22 +373,23 @@ where
 /// assert_eq!(output, "Hello: number 13".to_string());
 /// ```
 pub trait Contravariant<'b, A>: ContravariantInner<'b> {
-    /// `Self` but consuming `A` instead of [`ContravariantInner::RmapOut`]
+    /// `Self` but consuming `A` instead of
+    /// [`ContravariantInner::ContramapOut`]
     type Adapted<'a>
     where
         'b: 'a,
         A: 'a;
 
     /// Returns an adapted version of `Self` with
-    /// [`ContravariantInner::RmapOut`] replaced
+    /// [`ContravariantInner::ContramapOut`] replaced
     ///
     /// This method uses an adaption function `f: FnMut(A) -> B` to replace
-    /// `Self::RmapOut = B` with `A`.
+    /// `Self::ContramapOut = B` with `A`.
     fn contramap<'a, F>(self, f: F) -> Self::Adapted<'a>
     where
         'b: 'a,
         A: 'a,
-        F: 'a + Send + FnMut(A) -> Self::RmapOut;
+        F: 'a + Send + FnMut(A) -> Self::ContramapOut;
 }
 
 /// Same as [`ContravariantSelf`] but works on `&mut self`

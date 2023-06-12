@@ -216,7 +216,7 @@ macro_rules! fn_impl {
             where
                 'b: 'a,
                 A: 'a,
-                F: 'a + Send + FnMut(A) -> Self::RmapOut,
+                F: 'a + Send + FnMut(A) -> Self::ContramapOut,
             {
                 Box::new(move |consumee| (self)(f(consumee)))
             }
@@ -237,7 +237,7 @@ macro_rules! fn_impl {
             where
                 'b: 'a,
                 A: 'a,
-                F: 'a + Send + FnMut(A) -> Self::RmapOut,
+                F: 'a + Send + FnMut(A) -> Self::ContramapOut,
             {
                 Box::new(move |consumee| (self)(f(consumee)))
             }
