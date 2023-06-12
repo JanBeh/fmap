@@ -69,6 +69,26 @@ where
     }
 }
 
+impl<'a, A, B> Monad<'a, B> for VecDeque<A>
+where
+    A: 'a,
+{
+    fn bind<'b, F>(self, mut f: F) -> Self::Mapped<'b>
+    where
+        'a: 'b,
+        B: 'b,
+        F: 'b + Send + FnMut(Self::FmapIn) -> Self::Mapped<'b>,
+    {
+        let mut vec = VecDeque::new();
+        for item in self.into_iter() {
+            for item in f(item).into_iter() {
+                vec.push_back(item);
+            }
+        }
+        vec
+    }
+}
+
 impl<'a, A> FunctorSelf<'a> for LinkedList<A>
 where
     A: 'a,
@@ -127,6 +147,26 @@ where
         let mut this = LinkedList::new();
         this.push_back(b);
         this
+    }
+}
+
+impl<'a, A, B> Monad<'a, B> for LinkedList<A>
+where
+    A: 'a,
+{
+    fn bind<'b, F>(self, mut f: F) -> Self::Mapped<'b>
+    where
+        'a: 'b,
+        B: 'b,
+        F: 'b + Send + FnMut(Self::FmapIn) -> Self::Mapped<'b>,
+    {
+        let mut list = LinkedList::new();
+        for item in self.into_iter() {
+            for item in f(item).into_iter() {
+                list.push_back(item);
+            }
+        }
+        list
     }
 }
 
@@ -283,6 +323,27 @@ where
     }
 }
 
+impl<'a, A, B> Monad<'a, B> for HashSet<A>
+where
+    A: Eq + Hash + 'a,
+    B: Eq + Hash,
+{
+    fn bind<'b, F>(self, mut f: F) -> Self::Mapped<'b>
+    where
+        'a: 'b,
+        B: 'b,
+        F: 'b + Send + FnMut(Self::FmapIn) -> Self::Mapped<'b>,
+    {
+        let mut set = HashSet::new();
+        for item in self.into_iter() {
+            for item in f(item).into_iter() {
+                set.insert(item);
+            }
+        }
+        set
+    }
+}
+
 impl<'a, A> FunctorSelf<'a> for BTreeSet<A>
 where
     A: 'a + Ord,
@@ -338,6 +399,27 @@ where
     }
 }
 
+impl<'a, A, B> Monad<'a, B> for BTreeSet<A>
+where
+    A: Ord + 'a,
+    B: Ord,
+{
+    fn bind<'b, F>(self, mut f: F) -> Self::Mapped<'b>
+    where
+        'a: 'b,
+        B: 'b,
+        F: 'b + Send + FnMut(Self::FmapIn) -> Self::Mapped<'b>,
+    {
+        let mut set = BTreeSet::new();
+        for item in self.into_iter() {
+            for item in f(item).into_iter() {
+                set.insert(item);
+            }
+        }
+        set
+    }
+}
+
 impl<'a, A> FunctorSelf<'a> for BinaryHeap<A>
 where
     A: 'a + Ord,
@@ -390,5 +472,26 @@ where
         let mut this = BinaryHeap::with_capacity(1);
         this.push(b);
         this
+    }
+}
+
+impl<'a, A, B> Monad<'a, B> for BinaryHeap<A>
+where
+    A: Ord + 'a,
+    B: Ord,
+{
+    fn bind<'b, F>(self, mut f: F) -> Self::Mapped<'b>
+    where
+        'a: 'b,
+        B: 'b,
+        F: 'b + Send + FnMut(Self::FmapIn) -> Self::Mapped<'b>,
+    {
+        let mut heap = BinaryHeap::new();
+        for item in self.into_iter() {
+            for item in f(item).into_iter() {
+                heap.push(item);
+            }
+        }
+        heap
     }
 }
