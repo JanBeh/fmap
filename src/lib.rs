@@ -459,16 +459,22 @@ pub trait Monad<'a, B>: Pure<'a, B> {
 /// [joined]: Self::mjoin
 pub trait NestedMonad<'a>
 where
-    Self: Monad<'a, <Self::FmapInOut as FunctorSelf<'a>>::FmapInOut>,
+    Self: Monad<'a, <Self::InnerMonad as FunctorSelf<'a>>::FmapInOut>,
     Self: FunctorSelf<'a>,
-    Self::FmapInOut: FunctorSelf<'a>,
     Self: Functor<
         'a,
-        <Self::FmapInOut as FunctorSelf<'a>>::FmapInOut,
+        <Self::InnerMonad as FunctorSelf<'a>>::FmapInOut,
         FmapIn = Self::FmapInOut,
         Mapped<'a> = Self::FmapInOut,
     >,
 {
+    /// Helper type always equal to [`Self::FmapInOut`]
+    ///
+    /// This type is needed to circumvent
+    /// [Rust issue #20671](https://github.com/rust-lang/rust/issues/20671).
+    ///
+    /// [`Self::FmapInOut`]: FunctorSelf::FmapInOut
+    type InnerMonad: FunctorSelf<'a>;
     /// Generic join
     ///
     /// `.mjoin()` is equivalent to `.bind(|x| x)`.
@@ -489,6 +495,7 @@ where
         Mapped<'a> = Self::FmapInOut,
     >,
 {
+    type InnerMonad = Self::FmapInOut;
     fn mjoin(self) -> Self::FmapInOut {
         self.bind(|x| x)
     }

@@ -223,3 +223,16 @@ fn test_future_monad() {
     let fut2 = fut1.bind(|i: i32| Box::pin(async move { i * 7 }));
     assert_eq!(block_on(fut2), 14);
 }
+
+#[test]
+fn test_nested_monad_trait() {
+    fn func1<'a, T: NestedMonad<'a>>(x: T) -> T::FmapInOut {
+        x.bind(|x| x)
+    }
+    fn func2<'a, T: NestedMonad<'a>>(x: T) -> T::FmapInOut {
+        x.mjoin()
+    }
+    let nested = vec![vec![1, 3], vec![2, 9, 9]];
+    assert_eq!(func1(nested.clone()), vec![1, 3, 2, 9, 9]);
+    assert_eq!(func2(nested), vec![1, 3, 2, 9, 9]);
+}
