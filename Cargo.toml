@@ -6,7 +6,7 @@ edition = "2021"
 description = "Functors in Rust"
 repository = "https://github.com/JanBeh/fmap"
 license = "MIT OR Apache-2.0"
-keywords = ["functor"]
+keywords = ["functor", "monad"]
 
 [dev-dependencies]
 futures = "0.3.28"
