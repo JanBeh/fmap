@@ -294,6 +294,19 @@ where
     }
 }
 
+impl<'a, A> FunctorMut<'a> for HashSet<A>
+where
+    A: 'a + Eq + Hash,
+{
+    fn fmap_mut<F>(&mut self, f: F)
+    where
+        F: 'a + Send + FnMut(&mut Self::Inner),
+    {
+        let this = std::mem::take(self);
+        *self = this.fmap_fn_mutref(f);
+    }
+}
+
 impl<'a, A, B> Pure<'a, B> for HashSet<A>
 where
     A: Eq + Hash + 'a,
@@ -307,19 +320,6 @@ where
         let mut this = HashSet::with_capacity(1);
         this.insert(b);
         this
-    }
-}
-
-impl<'a, A> FunctorMut<'a> for HashSet<A>
-where
-    A: 'a + Eq + Hash,
-{
-    fn fmap_mut<F>(&mut self, f: F)
-    where
-        F: 'a + Send + FnMut(&mut Self::Inner),
-    {
-        let this = std::mem::take(self);
-        *self = this.fmap_fn_mutref(f);
     }
 }
 
