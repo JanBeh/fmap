@@ -2,28 +2,16 @@
 
 use super::*;
 
-impl<'a, A> FunctorSelf<'a> for Box<dyn 'a + Iterator<Item = A>>
-where
-    A: 'a,
-{
-    type Inner = A;
-}
-impl<'a, A> FunctorSelf<'a> for Box<dyn 'a + Iterator<Item = A> + Send>
-where
-    A: 'a,
-{
-    type Inner = A;
-}
-
 impl<'a, A, B> Functor<'a, B> for Box<dyn 'a + Iterator<Item = A>>
 where
     A: 'a,
     B: 'a,
 {
+    type Inner = A;
     type Mapped = Box<dyn 'a + Iterator<Item = B>>;
     fn fmap<F>(self, f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> B,
+        F: 'a + Send + FnMut(Self::Inner) -> B,
     {
         Box::new(self.map(f))
     }
@@ -34,16 +22,17 @@ where
     A: 'a,
     B: 'a,
 {
+    type Inner = A;
     type Mapped = Box<dyn 'a + Iterator<Item = B> + Send>;
     fn fmap<F>(self, f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> B,
+        F: 'a + Send + FnMut(Self::Inner) -> B,
     {
         Box::new(self.map(f))
     }
 }
 
-impl<'a, A> FunctorMut<'a> for Box<dyn 'a + Iterator<Item = A>>
+impl<'a, A> FunctorMut<'a, A> for Box<dyn 'a + Iterator<Item = A>>
 where
     A: 'a,
 {
@@ -60,7 +49,8 @@ where
         *self = this.fmap_fn_mutref(f);
     }
 }
-impl<'a, A> FunctorMut<'a> for Box<dyn 'a + Iterator<Item = A> + Send>
+impl<'a, A> FunctorMut<'a, A>
+    for Box<dyn 'a + Iterator<Item = A> + Send>
 where
     A: 'a,
 {
@@ -104,7 +94,7 @@ where
 {
     fn bind<F>(self, f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
+        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
     {
         struct Iter<'a, A, B> {
             f: Box<
@@ -144,7 +134,7 @@ where
 {
     fn bind<F>(self, f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
+        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
     {
         struct Iter<'a, A, B> {
             f: Box<

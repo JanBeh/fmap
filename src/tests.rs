@@ -177,7 +177,7 @@ fn test_boxed_iterator() {
 fn test_fmap_same() {
     fn double<'a, T>(x: T) -> T
     where
-        T: FunctorSelf<'a, Inner = i32>,
+        T: FunctorSelf<'a, i32>,
     {
         x.fmap(|x| 2 * x)
     }
@@ -192,22 +192,25 @@ fn test_fmap_cycle_types() {
     fn cycle_types1<'a, T, B, F1, F2>(x: T, f1: F1, f2: F2) -> T
     where
         T: Functor<'a, B>,
-        // this bound is implied:
-        // T::Mapped: Functor<'a, T::FmapIn, FmapIn = B, Mapped = T>,
         B: 'a,
-        F1: 'a + Send + FnMut(T::FmapIn) -> B,
-        F2: 'a + Send + FnMut(B) -> T::FmapIn,
+        F1: 'a + Send + FnMut(T::Inner) -> B,
+        F2: 'a + Send + FnMut(B) -> T::Inner,
     {
-        x.fmap(f1).fmap(|x| x).fmap(f2)
+        x.fmap(f1).fmap(|x: B| x).fmap(f2)
     }
     fn cycle_types2<'a, T, B, F1, F2>(x: T, f1: F1, f2: F2) -> T
     where
-        T: FunctorSelf<'a> + Functor<'a, B>,
+        T: Functor<'a, B>,
+        T: FunctorSelf<'a, <T as Functor<'a, B>>::Inner>,
         B: 'a,
-        F1: 'a + Send + FnMut(T::FmapIn) -> B,
-        F2: 'a + Send + FnMut(B) -> T::FmapIn,
+        F1: 'a + Send + FnMut(<T as Functor<'a, B>>::Inner) -> B,
+        F2: 'a + Send + FnMut(B) -> <T as Functor<'a, B>>::Inner,
     {
-        x.fmap(|x| x).fmap(f1).fmap(|x| x).fmap(f2).fmap(|x| x)
+        x.fmap(|x: <T as Functor<'a, B>>::Inner| x)
+            .fmap(f1)
+            .fmap(|x: B| x)
+            .fmap(f2)
+            .fmap(|x: <T as Functor<'a, B>>::Inner| x)
     }
     assert_eq!(
         cycle_types1(Some(7), |x| (x + 2) as f64, |x| x as i32 / 2),
@@ -236,10 +239,16 @@ fn test_future_monad() {
 
 #[test]
 fn test_nested_monad_trait() {
-    fn func1<'a, T: NestedMonad<'a>>(x: T) -> T::Inner {
+    fn func1<'a, T: NestedMonad<'a, A>, A>(x: T) -> A
+    where
+        A: 'a,
+    {
         x.bind(|x| x)
     }
-    fn func2<'a, T: NestedMonad<'a>>(x: T) -> T::Inner {
+    fn func2<'a, T: NestedMonad<'a, A>, A>(x: T) -> A
+    where
+        A: 'a,
+    {
         x.mjoin()
     }
     let nested = vec![vec![1, 3], vec![2, 9, 9]];

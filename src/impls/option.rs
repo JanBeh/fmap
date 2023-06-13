@@ -2,11 +2,19 @@
 
 use super::*;
 
-impl<'a, A> FunctorSelf<'a> for Option<A>
+impl<'a, A, B> Functor<'a, B> for Option<A>
 where
     A: 'a,
+    B: 'a,
 {
     type Inner = A;
+    type Mapped = Option<B>;
+    fn fmap<F>(self, f: F) -> Self::Mapped
+    where
+        F: 'a + Send + FnMut(Self::Inner) -> B,
+    {
+        self.map(f)
+    }
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
         F: 'a + Send + FnMut(&mut Self::Inner),
@@ -16,21 +24,7 @@ where
     }
 }
 
-impl<'a, A, B> Functor<'a, B> for Option<A>
-where
-    A: 'a,
-    B: 'a,
-{
-    type Mapped = Option<B>;
-    fn fmap<F>(self, f: F) -> Self::Mapped
-    where
-        F: 'a + Send + FnMut(Self::FmapIn) -> B,
-    {
-        self.map(f)
-    }
-}
-
-impl<'a, A> FunctorMut<'a> for Option<A>
+impl<'a, A> FunctorMut<'a, A> for Option<A>
 where
     A: 'a,
 {
@@ -61,7 +55,7 @@ where
 {
     fn bind<F>(self, f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
+        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
     {
         self.and_then(f)
     }

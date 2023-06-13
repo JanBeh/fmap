@@ -5,29 +5,16 @@ use super::*;
 use std::future::Future;
 use std::pin::Pin;
 
-impl<'a, A> FunctorSelf<'a> for Pin<Box<dyn 'a + Future<Output = A>>>
-where
-    A: 'a,
-{
-    type Inner = A;
-}
-impl<'a, A> FunctorSelf<'a>
-    for Pin<Box<dyn 'a + Future<Output = A> + Send>>
-where
-    A: 'a,
-{
-    type Inner = A;
-}
-
 impl<'a, A, B> Functor<'a, B> for Pin<Box<dyn 'a + Future<Output = A>>>
 where
     A: 'a,
     B: 'a,
 {
+    type Inner = A;
     type Mapped = Pin<Box<dyn 'a + Future<Output = B>>>;
     fn fmap<F>(self, mut f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> B,
+        F: 'a + Send + FnMut(Self::Inner) -> B,
     {
         Box::pin(async move { f(self.await) })
     }
@@ -38,16 +25,17 @@ where
     A: 'a,
     B: 'a,
 {
+    type Inner = A;
     type Mapped = Pin<Box<dyn 'a + Future<Output = B> + Send>>;
     fn fmap<F>(self, mut f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> B,
+        F: 'a + Send + FnMut(Self::Inner) -> B,
     {
         Box::pin(async move { f(self.await) })
     }
 }
 
-impl<'a, A> FunctorMut<'a> for Pin<Box<dyn 'a + Future<Output = A>>>
+impl<'a, A> FunctorMut<'a, A> for Pin<Box<dyn 'a + Future<Output = A>>>
 where
     A: 'a,
 {
@@ -62,7 +50,7 @@ where
         *self = this.fmap_fn_mutref(f);
     }
 }
-impl<'a, A> FunctorMut<'a>
+impl<'a, A> FunctorMut<'a, A>
     for Pin<Box<dyn 'a + Future<Output = A> + Send>>
 where
     A: 'a,
@@ -106,7 +94,7 @@ where
 {
     fn bind<F>(self, mut f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
+        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
     {
         Box::pin(async move { f(self.await).await })
     }
@@ -119,7 +107,7 @@ where
 {
     fn bind<F>(self, mut f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
+        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
     {
         Box::pin(async move { f(self.await).await })
     }

@@ -8,11 +8,19 @@ use std::collections::{
 };
 use std::hash::Hash;
 
-impl<'a, A> FunctorSelf<'a> for VecDeque<A>
+impl<'a, A, B> Functor<'a, B> for VecDeque<A>
 where
     A: 'a,
+    B: 'a,
 {
     type Inner = A;
+    type Mapped = VecDeque<B>;
+    fn fmap<F>(self, f: F) -> Self::Mapped
+    where
+        F: 'a + Send + FnMut(A) -> B,
+    {
+        self.into_iter().map(f).collect()
+    }
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
         F: 'a + Send + FnMut(&mut Self::Inner),
@@ -22,21 +30,7 @@ where
     }
 }
 
-impl<'a, A, B> Functor<'a, B> for VecDeque<A>
-where
-    A: 'a,
-    B: 'a,
-{
-    type Mapped = VecDeque<B>;
-    fn fmap<F>(self, f: F) -> Self::Mapped
-    where
-        F: 'a + Send + FnMut(A) -> B,
-    {
-        self.into_iter().map(f).collect()
-    }
-}
-
-impl<'a, A> FunctorMut<'a> for VecDeque<A>
+impl<'a, A> FunctorMut<'a, A> for VecDeque<A>
 where
     A: 'a,
 {
@@ -69,7 +63,7 @@ where
 {
     fn bind<F>(self, mut f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
+        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
     {
         let mut vec = VecDeque::new();
         for item in self.into_iter() {
@@ -81,11 +75,19 @@ where
     }
 }
 
-impl<'a, A> FunctorSelf<'a> for LinkedList<A>
+impl<'a, A, B> Functor<'a, B> for LinkedList<A>
 where
     A: 'a,
+    B: 'a,
 {
     type Inner = A;
+    type Mapped = LinkedList<B>;
+    fn fmap<F>(self, f: F) -> Self::Mapped
+    where
+        F: 'a + Send + FnMut(A) -> B,
+    {
+        self.into_iter().map(f).collect()
+    }
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
         F: 'a + Send + FnMut(&mut Self::Inner),
@@ -95,21 +97,7 @@ where
     }
 }
 
-impl<'a, A, B> Functor<'a, B> for LinkedList<A>
-where
-    A: 'a,
-    B: 'a,
-{
-    type Mapped = LinkedList<B>;
-    fn fmap<F>(self, f: F) -> Self::Mapped
-    where
-        F: 'a + Send + FnMut(A) -> B,
-    {
-        self.into_iter().map(f).collect()
-    }
-}
-
-impl<'a, A> FunctorMut<'a> for LinkedList<A>
+impl<'a, A> FunctorMut<'a, A> for LinkedList<A>
 where
     A: 'a,
 {
@@ -142,7 +130,7 @@ where
 {
     fn bind<F>(self, mut f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
+        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
     {
         let mut list = LinkedList::new();
         for item in self.into_iter() {
@@ -154,12 +142,20 @@ where
     }
 }
 
-impl<'a, K, A> FunctorSelf<'a> for HashMap<K, A>
+impl<'a, K, A, B> Functor<'a, B> for HashMap<K, A>
 where
     K: Eq + Hash,
     A: 'a,
+    B: 'a,
 {
     type Inner = A;
+    type Mapped = HashMap<K, B>;
+    fn fmap<F>(self, mut f: F) -> Self::Mapped
+    where
+        F: 'a + Send + FnMut(A) -> B,
+    {
+        self.into_iter().map(|(k, v)| (k, f(v))).collect()
+    }
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
         F: 'a + Send + FnMut(&mut Self::Inner),
@@ -169,22 +165,7 @@ where
     }
 }
 
-impl<'a, K, A, B> Functor<'a, B> for HashMap<K, A>
-where
-    K: Eq + Hash,
-    A: 'a,
-    B: 'a,
-{
-    type Mapped = HashMap<K, B>;
-    fn fmap<F>(self, mut f: F) -> Self::Mapped
-    where
-        F: 'a + Send + FnMut(A) -> B,
-    {
-        self.into_iter().map(|(k, v)| (k, f(v))).collect()
-    }
-}
-
-impl<'a, K, A> FunctorMut<'a> for HashMap<K, A>
+impl<'a, K, A> FunctorMut<'a, A> for HashMap<K, A>
 where
     K: Eq + Hash,
     A: 'a,
@@ -196,21 +177,6 @@ where
         for (_, inner) in self.iter_mut() {
             f(inner);
         }
-    }
-}
-
-impl<'a, K, A> FunctorSelf<'a> for BTreeMap<K, A>
-where
-    K: Ord,
-    A: 'a,
-{
-    type Inner = A;
-    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
-    where
-        F: 'a + Send + FnMut(&mut Self::Inner),
-    {
-        self.fmap_mut(f);
-        self
     }
 }
 
@@ -220,6 +186,7 @@ where
     A: 'a,
     B: 'a,
 {
+    type Inner = A;
     type Mapped = BTreeMap<K, B>;
     fn fmap<F>(self, mut f: F) -> Self::Mapped
     where
@@ -227,9 +194,16 @@ where
     {
         self.into_iter().map(|(k, v)| (k, f(v))).collect()
     }
+    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    where
+        F: 'a + Send + FnMut(&mut Self::Inner),
+    {
+        self.fmap_mut(f);
+        self
+    }
 }
 
-impl<'a, K, A> FunctorMut<'a> for BTreeMap<K, A>
+impl<'a, K, A> FunctorMut<'a, A> for BTreeMap<K, A>
 where
     K: Ord,
     A: 'a,
@@ -244,18 +218,12 @@ where
     }
 }
 
-impl<'a, A> FunctorSelf<'a> for HashSet<A>
-where
-    A: 'a + Eq + Hash,
-{
-    type Inner = A;
-}
-
 impl<'a, A, B> Functor<'a, B> for HashSet<A>
 where
     A: 'a + Eq + Hash,
     B: 'a + Eq + Hash,
 {
+    type Inner = A;
     type Mapped = HashSet<B>;
     fn fmap<F>(self, f: F) -> Self::Mapped
     where
@@ -265,7 +233,7 @@ where
     }
 }
 
-impl<'a, A> FunctorMut<'a> for HashSet<A>
+impl<'a, A> FunctorMut<'a, A> for HashSet<A>
 where
     A: 'a + Eq + Hash,
 {
@@ -297,7 +265,7 @@ where
 {
     fn bind<F>(self, mut f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
+        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
     {
         let mut set = HashSet::new();
         for item in self.into_iter() {
@@ -309,18 +277,12 @@ where
     }
 }
 
-impl<'a, A> FunctorSelf<'a> for BTreeSet<A>
-where
-    A: 'a + Ord,
-{
-    type Inner = A;
-}
-
 impl<'a, A, B> Functor<'a, B> for BTreeSet<A>
 where
     A: 'a + Ord,
     B: 'a + Ord,
 {
+    type Inner = A;
     type Mapped = BTreeSet<B>;
     fn fmap<F>(self, f: F) -> Self::Mapped
     where
@@ -330,7 +292,7 @@ where
     }
 }
 
-impl<'a, A> FunctorMut<'a> for BTreeSet<A>
+impl<'a, A> FunctorMut<'a, A> for BTreeSet<A>
 where
     A: 'a + Ord,
 {
@@ -362,7 +324,7 @@ where
 {
     fn bind<F>(self, mut f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
+        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
     {
         let mut set = BTreeSet::new();
         for item in self.into_iter() {
@@ -374,18 +336,12 @@ where
     }
 }
 
-impl<'a, A> FunctorSelf<'a> for BinaryHeap<A>
-where
-    A: 'a + Ord,
-{
-    type Inner = A;
-}
-
 impl<'a, A, B> Functor<'a, B> for BinaryHeap<A>
 where
     A: 'a + Ord,
     B: 'a + Ord,
 {
+    type Inner = A;
     type Mapped = BinaryHeap<B>;
     fn fmap<F>(self, f: F) -> Self::Mapped
     where
@@ -395,7 +351,7 @@ where
     }
 }
 
-impl<'a, A> FunctorMut<'a> for BinaryHeap<A>
+impl<'a, A> FunctorMut<'a, A> for BinaryHeap<A>
 where
     A: 'a + Ord,
 {
@@ -427,7 +383,7 @@ where
 {
     fn bind<F>(self, mut f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
+        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
     {
         let mut heap = BinaryHeap::new();
         for item in self.into_iter() {

@@ -2,11 +2,19 @@
 
 use super::*;
 
-impl<'a, A> FunctorSelf<'a> for Vec<A>
+impl<'a, A, B> Functor<'a, B> for Vec<A>
 where
     A: 'a,
+    B: 'a,
 {
     type Inner = A;
+    type Mapped = Vec<B>;
+    fn fmap<F>(self, f: F) -> Self::Mapped
+    where
+        F: 'a + Send + FnMut(Self::Inner) -> B,
+    {
+        self.into_iter().map(f).collect()
+    }
     fn fmap_fn_mutref<F>(mut self, f: F) -> Self
     where
         F: 'a + Send + FnMut(&mut Self::Inner),
@@ -16,21 +24,7 @@ where
     }
 }
 
-impl<'a, A, B> Functor<'a, B> for Vec<A>
-where
-    A: 'a,
-    B: 'a,
-{
-    type Mapped = Vec<B>;
-    fn fmap<F>(self, f: F) -> Self::Mapped
-    where
-        F: 'a + Send + FnMut(Self::FmapIn) -> B,
-    {
-        self.into_iter().map(f).collect()
-    }
-}
-
-impl<'a, A> FunctorMut<'a> for Vec<A>
+impl<'a, A> FunctorMut<'a, A> for Vec<A>
 where
     A: 'a,
 {
@@ -61,7 +55,7 @@ where
 {
     fn bind<F>(self, mut f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped,
+        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
     {
         let mut vec = Vec::new();
         for item in self.into_iter() {

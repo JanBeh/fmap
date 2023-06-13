@@ -8,11 +8,9 @@
 //!   a generalization of [`Option::map`], [`Result::map`], and so on, and
 //!   which is [implemented] for a variety of types in the standard library.
 //! * [`FunctorSelf`] is a special case of `Functor` where types aren't changed
-//!   when mapping. It must be implemented for every `Functor` and it must be
-//!   added as a bound when mapping a type to itself.
-//! * [`FunctorInner`] is a helper trait, which is automatically implemented
-//!   through a blanket implementation. It provides the
-//!   [`FunctorInner::FmapIn`] type, which is passed to the `fmap` method.
+//!   when mapping. It is automatically implemented through a blanket
+//!   implementation and it must be added as a bound when mapping a type to
+//!   itself.
 //! * [`FunctorMut`] is a special case of `FunctorSelf` whose [`fmap_mut`]
 //!   method operates on `&mut self`. It is not implemented automatically, but
 //!   this crate provides implementations for all types in the standard library
@@ -29,7 +27,6 @@
 //!
 //! * [`Contravariant`] (akin to `Functor`)
 //! * [`ContravariantSelf`] (akin to `FunctorSelf`)
-//! * [`ContravariantInner`] (akin to `FunctorInner`)
 //! * [`ContravariantMut`] (akin to `FunctorMut`)
 //!
 //! # Monads
@@ -63,9 +60,8 @@ mod tests;
 /// A [`Functor`] that can be mapped to itself (when providing an
 /// `FnMut(Self::Inner) -> Self::Inner`)
 ///
-/// This trait must always be implemented for every `Functor` and is explicitly
-/// required as bound when the compiler shall infer that the return type of
-/// [`Functor::fmap`] is `Self`.
+/// This trait should be required as bound when the compiler shall infer that
+/// the return type of [`Functor::fmap`] is `Self`.
 ///
 /// # Examples
 ///
@@ -73,79 +69,26 @@ mod tests;
 /// # use fmap::FunctorSelf;
 /// fn double_inner_i32<'a, T>(outer: T) -> T
 /// where
-///     //T: Functor<'a, i32, FmapIn = i32>, // doesn't work
-///     T: FunctorSelf<'a, Inner = i32>, // use this instead
+///     //T: Functor<'a, i32, Inner = i32>, // doesn't work
+///     T: FunctorSelf<'a, i32>, // use this instead
 /// {
 ///     outer.fmap(|x| 2 * x)
 ///     // NOTE: The following may be more efficient:
 ///     // outer.fmap_fn_mutref(|x| *x *= 2)
 /// }
 /// ```
-///
-/// For implementation of this trait, see example of
-/// [`Functor` implementation].
-///
-/// [`Functor` implementation]: Functor#implementing-functor
-pub trait FunctorSelf<'a>
+pub trait FunctorSelf<'a, A>
 where
-    Self: Sized,
-    Self: Functor<'a, Self::Inner, FmapIn = Self::Inner, Mapped = Self>,
+    Self: Functor<'a, A, Inner = A, Mapped = Self>,
+    A: 'a,
 {
-    /// Inner type
-    ///
-    /// For any functor `T<A>`, where values of type `A` are passed to the
-    /// [`Functor::fmap`] function, set `FunctorSelf::Inner = A`.
-    ///
-    /// This type is always equal to [`FunctorInner::FmapIn`].
-    type Inner: 'a;
-
-    /// Same as [`Functor::fmap`] but uses a mapping function that takes a
-    /// mutable reference
-    ///
-    /// This method has a default implementation that can be overridden if
-    /// there is a more efficient way of mapping inner values in place.
-    /// See also [`FunctorMut::fmap_mut`], which works on `&mut self`.
-    ///
-    /// For types which implement `FunctorMut` and where `fmap_mut`'s
-    /// implementation doesn't use `fmap_fn_mutref`, consider to provide the
-    /// following implementation:
-    ///
-    /// ```ignore
-    /// fn fmap_fn_mutref<F>(mut self, f: F) -> Self
-    /// where
-    ///     F: 'a + Send + FnMut(&mut Self::Inner),
-    /// {
-    ///     self.fmap_mut(f);
-    ///     self
-    /// }
-    /// ```
-    fn fmap_fn_mutref<F>(self, mut f: F) -> Self
-    where
-        F: 'a + Send + FnMut(&mut Self::Inner),
-    {
-        self.fmap(move |mut inner| {
-            f(&mut inner);
-            inner
-        })
-    }
 }
 
-/// Automatically implemented helper trait providing the [`FmapIn`] type
-///
-/// [`FmapIn`]: Self::FmapIn
-pub trait FunctorInner<'a> {
-    /// Inner type before mapping (i.e. argument to [`Functor::fmap`])
-    ///
-    /// This type is always equal to [`FunctorSelf::Inner`], but required due
-    /// to limitations in Rust's type system.
-    type FmapIn: 'a;
-}
-
-impl<'a, T> FunctorInner<'a> for T
+impl<'a, T, A> FunctorSelf<'a, A> for T
 where
-    T: FunctorSelf<'a>,
+    T: Functor<'a, A, Inner = A, Mapped = Self>,
+    A: 'a,
 {
-    type FmapIn = T::Inner;
 }
 
 /// Generic type (e.g. `T<A>`) whose inner type can be mapped (e.g. resulting
@@ -165,29 +108,22 @@ where
 ///
 /// ```
 /// # use fmap::Functor;
-/// # use fmap::FunctorSelf;
 /// # struct Option<T>(T);
 /// # impl<T> Option<T> {
 /// #     pub fn map<U, F: FnOnce(T) -> U>(self, mut f: F) -> Option<U> {
 /// #         Option(f(self.0))
 /// #     }
 /// # }
-/// impl<'a, A> FunctorSelf<'a> for Option<A>
-/// where
-///     A: 'a,
-/// {
-///     type Inner = A;
-/// }
-///
 /// impl<'a, A, B> Functor<'a, B> for Option<A>
 /// where
 ///     A: 'a,
 ///     B: 'a,
 /// {
+///     type Inner = A;
 ///     type Mapped = Option<B>;
 ///     fn fmap<F>(self, f: F) -> Self::Mapped
 ///     where
-///         F: 'a + Send + FnMut(A) -> B,
+///         F: 'a + Send + FnMut(Self::Inner) -> B,
 ///     {
 ///         self.map(f)
 ///     }
@@ -213,7 +149,7 @@ where
 /// where
 ///     // NOTE: `A` and `B` can be different types. Where `A` and `B`
 ///     // are always the same type, `FunctorSelf` should be used.
-///     T: Functor<'a, B, FmapIn = A>,
+///     T: Functor<'a, B, Inner = A>,
 ///     A: 'a + Into<B>,
 /// {
 ///     outer.fmap(Into::into)
@@ -223,115 +159,114 @@ where
 /// let float_vec2: Vec<f64> = convert_inner(int_vec2);
 /// assert_eq!(float_vec2, vec![7.0, 11.0, 13.0]);
 /// ```
+///
+/// Also see [`FunctorSelf`].
 pub trait Functor<'a, B>
 where
-    Self: FunctorInner<'a>,
+    Self: Sized,
     B: 'a,
 {
+    /// Inner type
+    ///
+    /// For any functor `T<A>`, where values of type `A` are passed to the
+    /// [`Functor::fmap`] function, set `Inner = A`.
+    type Inner: 'a;
+
     /// `Self` but with [inner type] mapped to `B`
     ///
     /// For any functor `T`, define like:
     /// `<T<A> as Functor<'a, B>>::Mapped = T<B>`.
     ///
-    /// [inner type]: FunctorSelf::Inner
-    type Mapped: FunctorSelf<'a, Inner = B>
-        + Functor<'a, Self::FmapIn, Mapped = Self>;
+    /// [inner type]: Functor::Inner
+    type Mapped: Functor<'a, B, Inner = B, Mapped = Self::Mapped>
+        + Functor<'a, Self::Inner, Inner = B, Mapped = Self>;
 
     /// Replaces inner type and value by applying a mapping function
     ///
-    /// Where [`FunctorInner::FmapIn`] and `B` are the same type, consider
-    /// using [`FunctorSelf::fmap_fn_mutref`] or [`FunctorMut::fmap_mut`],
-    /// which might provide specialized implementations that are more
-    /// efficient.
+    /// Where [`Functor::Inner`] and `B` are the same type, consider using
+    /// [`Functor::fmap_fn_mutref`] or [`FunctorMut::fmap_mut`], which might
+    /// provide specialized implementations that are more efficient.
     fn fmap<F>(self, f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> B;
-}
+        F: 'a + Send + FnMut(Self::Inner) -> B;
 
-/// Same as [`FunctorSelf`] but works on `&mut self`
-///
-/// This trait is not automatically implemented. If a type doesn't implement it
-/// but implements [`Functor`], you can always use the
-/// [`FunctorSelf::fmap_fn_mutref`] method, which has a default implementation.
-///
-/// # Examples
-///
-/// ```
-/// # use fmap::FunctorSelf;
-/// # use fmap::FunctorMut;
-/// fn double_inner_i32_in_place<'a, T>(outer: &mut T)
-/// where
-///     T: FunctorSelf<'a, Inner = i32>,
-///     T: FunctorMut<'a>,
-/// {
-///     outer.fmap_mut(|x| *x *= 2);
-/// }
-/// ```
-pub trait FunctorMut<'a>: FunctorSelf<'a> {
-    /// Same as [`FunctorSelf::fmap_fn_mutref`] but works on `&mut self`
-    fn fmap_mut<F>(&mut self, f: F)
-    where
-        Self: FunctorSelf<'a>,
-        F: 'a + Send + FnMut(&mut Self::Inner);
-}
-
-/// A [`Contravariant`] functor whose [inner type] can stay the same when using
-/// [`contramap`]
-///
-/// This trait must always be implemented for every `Contravariant` and is
-/// explicitly required as bound when the compiler shall infer that the return
-/// type of [`Contravariant::contramap`] is `Self`.
-///
-/// [inner type]: Self::Inner
-/// [`contramap`]: Contravariant::contramap
-pub trait ContravariantSelf<'a>
-where
-    Self: Sized,
-    Self: Contravariant<
-        'a,
-        Self::Inner,
-        ContramapOut = Self::Inner,
-        Adapted = Self,
-    >,
-{
-    /// Inner type
+    /// Same as [`Functor::fmap`] but uses a mapping function that takes a
+    /// mutable reference
     ///
-    /// For any contravariant functor `T<B>`, where values of type `B` are
-    /// returned by the [`Contravariant::contramap`] function, set
-    /// `ContravariantSelf::Inner = A`.
+    /// This method has a default implementation that can be overridden if
+    /// there is a more efficient way of mapping inner values in place.
+    /// See also [`FunctorMut::fmap_mut`], which works on `&mut self`.
     ///
-    /// This type is always equal to [`ContravariantInner::ContramapOut`].
-    type Inner: 'a;
-    /// Same as [`Contravariant::contramap`] but uses a mapping function that
-    /// takes a mutable reference
-    fn contramap_fn_mutref<F>(self, mut f: F) -> Self
+    /// For types which implement `FunctorMut` and where `fmap_mut`'s
+    /// implementation doesn't use `fmap_fn_mutref`, consider to provide the
+    /// following implementation:
+    ///
+    /// ```ignore
+    /// fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    /// where
+    ///     F: 'a + Send + FnMut(&mut Self::Inner),
+    /// {
+    ///     self.fmap_mut(f);
+    ///     self
+    /// }
+    /// ```
+    fn fmap_fn_mutref<F>(self, mut f: F) -> Self
     where
+        Self: FunctorSelf<'a, B>,
         F: 'a + Send + FnMut(&mut Self::Inner),
     {
-        self.contramap(move |mut inner| {
+        self.fmap(move |mut inner| {
             f(&mut inner);
             inner
         })
     }
 }
 
-/// Automatically implemented helper trait providing the [`ContramapOut`] type
+/// Same as [`Functor`] but works on `&mut self`
 ///
-/// [`ContramapOut`]: Self::ContramapOut
-pub trait ContravariantInner<'a> {
-    /// Inner type before adapting
-    /// (i.e. return value of [`Contravariant::contramap`])
-    ///
-    /// This type is always equal to [`ContravariantSelf::Inner`], but
-    /// required due to limitations in Rust's type system.
-    type ContramapOut: 'a;
+/// This trait is not automatically implemented. If a type doesn't implement it
+/// but implements [`Functor`], you can always use the
+/// [`Functor::fmap_fn_mutref`] method, which has a default implementation.
+///
+/// # Examples
+///
+/// ```
+/// # use fmap::FunctorMut;
+/// fn double_inner_i32_in_place<'a, T>(outer: &mut T)
+/// where
+///     T: FunctorMut<'a, i32>,
+/// {
+///     outer.fmap_mut(|x| *x *= 2);
+/// }
+/// ```
+pub trait FunctorMut<'a, A>
+where
+    Self: FunctorSelf<'a, A>,
+    A: 'a,
+{
+    /// Same as [`Functor::fmap_fn_mutref`] but works on `&mut self`
+    fn fmap_mut<F>(&mut self, f: F)
+    where
+        F: 'a + Send + FnMut(&mut Self::Inner);
 }
 
-impl<'a, T> ContravariantInner<'a> for T
+/// A [`Contravariant`] functor that can be mapped to itself (when providing an
+/// `FnMut(Self::Inner) -> Self::Inner`)
+///
+/// This trait should be required as bound when the compiler shall infer that
+/// the return type of [`Contravariant::contramap`] is `Self`.
+pub trait ContravariantSelf<'a, A>
 where
-    T: ContravariantSelf<'a>,
+    Self: Contravariant<'a, A, Inner = A, Mapped = Self>,
+    A: 'a,
 {
-    type ContramapOut = T::Inner;
+}
+
+impl<'a, T, A> ContravariantSelf<'a, A> for T
+where
+    T: Contravariant<'a, A, Inner = A, Mapped = Self>,
+    A: 'a,
+{
 }
 
 /// Contravariant functor (e.g. `Writer<B>` which can be converted into
@@ -358,32 +293,54 @@ where
 ///
 /// assert_eq!(output, "Hello: number 13".to_string());
 /// ```
-pub trait Contravariant<'a, A>: ContravariantInner<'a> {
-    /// `Self` but consuming `A` instead of
-    /// [`ContravariantInner::ContramapOut`]
-    type Adapted: ContravariantSelf<'a>
-        + Contravariant<'a, Self::ContramapOut, Adapted = Self>;
+pub trait Contravariant<'a, A>
+where
+    Self: Sized,
+    A: 'a,
+{
+    /// Inner type
+    ///
+    /// For any contravariant functor `T<B>`, where values of type `B` are
+    /// returned by the [`Contravariant::contramap`] function, set
+    /// `Inner = B`.
+    type Inner: 'a;
 
-    /// Returns an adapted version of `Self` with
-    /// [`ContravariantInner::ContramapOut`] replaced
+    /// `Self` but consuming `A` instead of [`Contravariant::Inner`]
+    type Mapped: Contravariant<'a, A, Inner = A, Mapped = Self::Mapped>
+        + Contravariant<'a, Self::Inner, Inner = A, Mapped = Self>;
+
+    /// Returns an adapted version of `Self` with [`Contravariant::Inner`]
+    /// replaced
     ///
     /// This method uses an adaption function `f: FnMut(A) -> B` to replace
     /// `Self::ContramapOut = B` with `A`.
-    fn contramap<F>(self, f: F) -> Self::Adapted
+    fn contramap<F>(self, f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(A) -> Self::ContramapOut;
+        F: 'a + Send + FnMut(A) -> Self::Inner;
+
+    /// Same as [`Contravariant::contramap`] but uses a mapping function that
+    /// takes a mutable reference
+    fn contramap_fn_mutref<F>(self, mut f: F) -> Self
+    where
+        Self: ContravariantSelf<'a, A>,
+        F: 'a + Send + FnMut(&mut Self::Inner),
+    {
+        self.contramap(move |mut inner| {
+            f(&mut inner);
+            inner
+        })
+    }
 }
 
 /// Same as [`ContravariantSelf`] but works on `&mut self`
-pub trait ContravariantMut<'a>
+pub trait ContravariantMut<'a, A>
 where
-    Self: ContravariantSelf<'a>,
+    Self: ContravariantSelf<'a, A>,
+    A: 'a,
 {
-    /// Same as [`ContravariantSelf::contramap_fn_mutref`] but works on
-    /// `&mut self`
+    /// Same as [`Contravariant::contramap_fn_mutref`] but works on `&mut self`
     fn contramap_mut<F>(&mut self, f: F)
     where
-        Self: ContravariantSelf<'a>,
         F: 'a + Send + FnMut(&mut Self::Inner);
 }
 
@@ -431,17 +388,17 @@ where
 {
     /// Call function with [inner values], returning [mapped] version of `Self`
     ///
-    /// [inner values]: FunctorInner::FmapIn
+    /// [inner values]: Functor::Inner
     /// [mapped]: Functor::Mapped
     fn bind<F>(self, f: F) -> Self::Mapped
     where
-        F: 'a + Send + FnMut(Self::FmapIn) -> Self::Mapped;
+        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped;
 }
 
 /// Nested monad that can be [joined]
 ///
-/// This trait is automatically implemented for `T<T<B>>` when
-/// `T: Monad<'a, B, FmapIn = T<B>>`.
+/// This trait is automatically implemented for nested monads with type
+/// parameter `A` being the inner monad.
 ///
 /// [joined]: Self::mjoin
 ///
@@ -450,7 +407,11 @@ where
 /// ```
 /// use fmap::NestedMonad;
 ///
-/// fn my_mjoin<'a, M: NestedMonad<'a>>(m: M) -> M::Inner {
+/// fn my_mjoin<'a, M: NestedMonad<'a, A>, A>(m: M) -> A
+/// where
+///     M: NestedMonad<'a, A>,
+///     A: 'a,
+/// {
 ///     m.bind(|x| x)
 /// }
 ///
@@ -458,46 +419,39 @@ where
 /// assert_eq!(my_mjoin(nested.clone()), vec![1, 3, 2, 9, 9]);
 /// assert_eq!(nested.mjoin(), vec![1, 3, 2, 9, 9]);
 /// ```
-pub trait NestedMonad<'a>
+pub trait NestedMonad<'a, A>
 where
-    Self: Monad<'a, <Self::InnerMonad as FunctorSelf<'a>>::Inner>,
-    Self: FunctorSelf<'a>,
+    Self: Monad<'a, <Self::InnerMonad as Functor<'a, A>>::Inner>,
     Self: Functor<
         'a,
-        <Self::InnerMonad as FunctorSelf<'a>>::Inner,
-        FmapIn = Self::Inner,
-        Mapped = Self::Inner,
+        <Self::InnerMonad as Functor<'a, A>>::Inner,
+        Inner = A,
+        Mapped = A,
     >,
+    A: 'a,
 {
-    /// Helper type always equal to [`Self::Inner`]
+    /// Helper type always equal to `A`
     ///
     /// This type is needed to circumvent
     /// [Rust issue #20671](https://github.com/rust-lang/rust/issues/20671).
-    ///
-    /// [`Self::Inner`]: FunctorSelf::Inner
-    type InnerMonad: FunctorSelf<'a>;
+    type InnerMonad: Functor<'a, A>;
     /// Generic join
     ///
     /// `.mjoin()` is equivalent to `.bind(|x| x)`.
-    fn mjoin(self) -> Self::Inner {
+    fn mjoin(self) -> A {
         self.bind(|x| x)
     }
 }
 
-impl<'a, T> NestedMonad<'a> for T
+impl<'a, T, A> NestedMonad<'a, A> for T
 where
-    T: Monad<'a, <Self::Inner as FunctorSelf<'a>>::Inner>,
-    T: FunctorSelf<'a>,
-    T::Inner: FunctorSelf<'a>,
-    T: Functor<
-        'a,
-        <Self::Inner as FunctorSelf<'a>>::Inner,
-        FmapIn = Self::Inner,
-        Mapped = Self::Inner,
-    >,
+    T: Monad<'a, <A as Functor<'a, A>>::Inner>,
+    A: Functor<'a, A>,
+    T: Functor<'a, <A as Functor<'a, A>>::Inner, Inner = A, Mapped = A>,
+    A: 'a,
 {
-    type InnerMonad = Self::Inner;
-    fn mjoin(self) -> Self::Inner {
+    type InnerMonad = A;
+    fn mjoin(self) -> A {
         self.bind(|x| x)
     }
 }
@@ -511,7 +465,7 @@ pub fn monad_fmap<'a, T, B, F>(monad: T, mut f: F) -> T::Mapped
 where
     T: Monad<'a, B>,
     B: 'a,
-    F: 'a + Send + FnMut(T::FmapIn) -> B,
+    F: 'a + Send + FnMut(T::Inner) -> B,
 {
     monad.bind(move |inner| T::pure(f(inner)))
 }
