@@ -234,7 +234,8 @@ where
     /// `<T<A> as Functor<'a, B>>::Mapped = T<B>`.
     ///
     /// [inner type]: FunctorSelf::Inner
-    type Mapped;
+    type Mapped: FunctorSelf<'a, Inner = B>
+        + Functor<'a, Self::FmapIn, Mapped = Self>;
 
     /// Replaces inner type and value by applying a mapping function
     ///
@@ -360,7 +361,8 @@ where
 pub trait Contravariant<'a, A>: ContravariantInner<'a> {
     /// `Self` but consuming `A` instead of
     /// [`ContravariantInner::ContramapOut`]
-    type Adapted;
+    type Adapted: ContravariantSelf<'a>
+        + Contravariant<'a, Self::ContramapOut, Adapted = Self>;
 
     /// Returns an adapted version of `Self` with
     /// [`ContravariantInner::ContramapOut`] replaced

@@ -189,19 +189,32 @@ fn test_fmap_same() {
 
 #[test]
 fn test_fmap_cycle_types() {
-    fn cycle_types<'a, T, B, F1, F2>(x: T, f1: F1, f2: F2) -> T
+    fn cycle_types1<'a, T, B, F1, F2>(x: T, f1: F1, f2: F2) -> T
     where
         T: Functor<'a, B>,
-        // complex bound required here:
-        T::Mapped: Functor<'a, T::FmapIn, FmapIn = B, Mapped = T>,
+        // this bound is implied:
+        // T::Mapped: Functor<'a, T::FmapIn, FmapIn = B, Mapped = T>,
         B: 'a,
         F1: 'a + Send + FnMut(T::FmapIn) -> B,
         F2: 'a + Send + FnMut(B) -> T::FmapIn,
     {
-        x.fmap(f1).fmap(f2)
+        x.fmap(f1).fmap(|x| x).fmap(f2)
+    }
+    fn cycle_types2<'a, T, B, F1, F2>(x: T, f1: F1, f2: F2) -> T
+    where
+        T: FunctorSelf<'a> + Functor<'a, B>,
+        B: 'a,
+        F1: 'a + Send + FnMut(T::FmapIn) -> B,
+        F2: 'a + Send + FnMut(B) -> T::FmapIn,
+    {
+        x.fmap(|x| x).fmap(f1).fmap(|x| x).fmap(f2).fmap(|x| x)
     }
     assert_eq!(
-        cycle_types(Some(7), |x| (x + 2) as f64, |x| x as i32 / 2),
+        cycle_types1(Some(7), |x| (x + 2) as f64, |x| x as i32 / 2),
+        Some(4)
+    );
+    assert_eq!(
+        cycle_types2(Some(7), |x| (x + 2) as f64, |x| x as i32 / 2),
         Some(4)
     );
 }
