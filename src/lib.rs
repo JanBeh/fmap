@@ -45,8 +45,7 @@ mod impls;
 #[cfg(test)]
 mod tests;
 
-/// A [`Functor`] that can be mapped to itself (when providing an
-/// `FnMut(Self::Inner) -> Self::Inner`)
+/// A [`Functor`] that can be mapped to itself
 ///
 /// This trait should be required as bound when the compiler shall infer that
 /// the return type of [`Functor::fmap`] is `Self`.
@@ -238,8 +237,7 @@ where
         F: 'a + Send + FnMut(&mut Self::Inner);
 }
 
-/// A [`Contravariant`] functor that can be mapped to itself (when providing an
-/// `FnMut(Self::Inner) -> Self::Inner`)
+/// A [`Contravariant`] functor that can be mapped to itself
 ///
 /// This trait should be required as bound when the compiler shall infer that
 /// the return type of [`Contravariant::contramap`] is `Self`.
@@ -257,10 +255,7 @@ where
 {
 }
 
-/// Contravariant functor (e.g. `Writer<B>` which can be converted into
-/// `Writer<A>` by providing an `FnMut(A) -> B` to [`contramap`])
-///
-/// [`contramap`]: Self::contramap
+/// Contravariant functor
 ///
 /// # Examples
 ///
