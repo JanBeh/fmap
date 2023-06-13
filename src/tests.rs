@@ -255,3 +255,47 @@ fn test_nested_monad_trait() {
     assert_eq!(func1(nested.clone()), vec![1, 3, 2, 9, 9]);
     assert_eq!(func2(nested), vec![1, 3, 2, 9, 9]);
 }
+
+#[test]
+fn test_applicative_fmap() {
+    let a = vec![15, 11, 3];
+    let b = applicative_fmap(a, |x| 3 * x);
+    assert_eq!(b, vec![45, 33, 9]);
+}
+
+#[test]
+fn test_monad_apply() {
+    let f: Vec<Box<dyn Send + FnMut(i32) -> i32>> =
+        vec![Box::new(|x| x), Box::new(|x| x * 100)];
+    let a = vec![4, 7, 9];
+    let b = monad_apply(a, f);
+    assert_eq!(b, vec![4, 7, 9, 400, 700, 900]);
+}
+
+#[test]
+fn test_apply_option() {
+    assert_eq!(None::<i32>.apply(None), None::<i32>);
+    assert_eq!(Some(5).apply(None), None::<i32>);
+    assert_eq!(
+        None::<i32>.apply(Some(Box::new(|x| x * 4))),
+        None::<i32>
+    );
+    assert_eq!(Some(3).apply(Some(Box::new(|x| x * 4))), Some(12));
+}
+
+#[test]
+fn test_apply_result() {
+    assert_eq!(
+        Err::<i32, i32>(101).apply(Err(102)),
+        Err::<i32, i32>(102)
+    );
+    assert_eq!(Ok::<i32, i32>(5).apply(Err(102)), Err::<i32, i32>(102));
+    assert_eq!(
+        Err::<i32, i32>(101).apply(Ok(Box::new(|x| x * 4))),
+        Err::<i32, i32>(101)
+    );
+    assert_eq!(
+        Ok::<i32, i32>(3).apply(Ok(Box::new(|x| x * 4))),
+        Ok::<i32, i32>(12)
+    );
+}

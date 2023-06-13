@@ -66,3 +66,19 @@ where
         vec
     }
 }
+
+impl<'a, A, B> Applicative<'a, B> for Vec<A>
+where
+    A: 'a + Clone,
+    B: 'a,
+{
+    fn apply(self, f: Vec<BoxMapper<'a, Self, B>>) -> Vec<B> {
+        let mut vec = Vec::with_capacity(f.len() * self.len());
+        for mut func in f.into_iter() {
+            for item in self.iter().cloned() {
+                vec.push((func)(item))
+            }
+        }
+        vec
+    }
+}

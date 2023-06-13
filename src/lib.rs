@@ -34,22 +34,10 @@
 //! The [`Monad`] trait describes functors which are also monads. Its
 //! supertrait [`Pure`] allows wrapping a single value. ([`Pure::pure`] is
 //! equivalent to what's usually called "return" in the context of monads).
-//! The method [`Monad::bind`] is a generalization of [`Option::and_then`] and
-//! [`Result::and_then`].
 //!
-//! Pinned boxed [`Future`]s are also monads. The `bind` method will call the
-//! given closure on completion of the future.
+//! # Applicative functors
 //!
-//! *Note:* This implementation doesn't require [`Future::Output`] to be a
-//! [`Result`] and it will thus not short-circuit when a [`Result::Err`] is
-//! returned. Therefore, it rather behaves like `.then` (instead of
-//! `.and_then`) on futures.
-//!
-//! Nested monads automatically implement [`NestedMonad`] and can be joined
-//! with [`NestedMonad::mjoin`], which is equivalent to `.bind(|x| x)`.
-//!
-//! [`Future`]: std::future::Future
-//! [`Future::Output`]: std::future::Future::Output
+//! For applicative functors see the [`Applicative`] trait.
 
 #![warn(missing_docs)]
 
@@ -363,6 +351,22 @@ where
 
 /// A [`Functor`] that is also a monad
 ///
+/// *Note:* The `Monad` trait deliberately does not imply [`Applicative`].
+/// See documentation on [`Applicative`] for further information.
+///
+/// The method [`Monad::bind`] is a generalization of [`Option::and_then`] and
+/// [`Result::and_then`]. Pinned boxed [`Future`]s are also monads. The `bind`
+/// method will call the given closure on completion of the future. This monad
+/// implementation doesn't require [`Future::Output`] to be a [`Result`] and it
+/// will thus not short-circuit when a [`Result::Err`] is returned. Therefore,
+/// it rather behaves like `.then` (instead of `.and_then`) on futures.
+///
+/// Nested monads automatically implement [`NestedMonad`] and can be joined
+/// with [`NestedMonad::mjoin`], which is equivalent to `.bind(|x| x)`.
+///
+/// [`Future`]: std::future::Future
+/// [`Future::Output`]: std::future::Future::Output
+///
 /// # Examples
 ///
 /// ```
@@ -465,4 +469,97 @@ where
     F: 'a + Send + FnMut(T::Inner) -> B,
 {
     monad.bind(move |inner| T::pure(f(inner)))
+}
+
+/// A [boxed] closure argument to [`<T as Functor<'a, B>>::fmap`], needed for
+/// [`Applicative`]
+///
+/// Closures must be boxed when being the [inner type] of an [`Applicative`]
+/// functor that is passed to [`Applicative::apply`].
+///
+/// [boxed]: Box
+/// [`<T as Functor<'a, B>>::fmap`]: Functor::fmap
+/// [inner type]: Functor::Inner
+pub type BoxMapper<'a, T, B> =
+    Box<dyn 'a + Send + FnMut(<T as Functor<'a, B>>::Inner) -> B>;
+
+type WrappedValue<'a, T, B> = <T as Functor<'a, B>>::Mapped;
+
+type WrappedMapper<'a, T, B> = WrappedValue<'a, T, BoxMapper<'a, T, B>>;
+
+/// An applicative [`Functor`]
+///
+/// *Note:* In functional programming, every monad is also an applicative
+/// functor. The [`Monad`] trait, however, does not have `Applicative` as
+/// superclass, because it is not possible to provide a corresponding
+/// `Applicative` implementation for every monad. The reason is that (unlike in
+/// functional programming) values in Rust may be moved and only used once. The
+/// `Applicative` implementation for `Vec<A>` demands `A: Clone`, for example,
+/// while the `Monad` implementation for `Vec<A>` does not put any bounds on
+/// `A`.
+///
+/// # Examples
+///
+/// ```
+/// use fmap::Applicative;
+///
+/// let f: Vec<Box<dyn Send + FnMut(i32) -> i32>> =
+///     vec![Box::new(|x| x), Box::new(|x| x * 100)];
+/// let a = vec![4, 7, 9];
+/// let b = a.apply(f);
+/// assert_eq!(b, vec![4, 7, 9, 400, 700, 900]);
+/// ```
+pub trait Applicative<'a, B>
+where
+    Self: Pure<'a, B>,
+    Self: Pure<'a, BoxMapper<'a, Self, B>>,
+    B: 'a,
+{
+    /// Like [`Functor::fmap`], but takes a wrapped (and boxed) mapping
+    /// function
+    fn apply(
+        self,
+        f: WrappedMapper<'a, Self, B>,
+    ) -> WrappedValue<'a, Self, B>;
+}
+
+/// Generic implementation of [`Functor::fmap`] for [`Applicative`] functors
+///
+/// This generic implementation can be used to define `Functor::fmap` based on
+/// [`Applicative::apply`] and [`Pure::pure`] when the functor is applicative.
+/// A more specific implementation might be more efficient though.
+pub fn applicative_fmap<'a, T, B, F>(
+    a: T,
+    f: F,
+) -> WrappedValue<'a, T, B>
+where
+    T: Applicative<'a, B>,
+    F: 'a + Send + FnMut(<T as Functor<'a, B>>::Inner) -> B,
+{
+    a.apply(T::pure(Box::new(f) as BoxMapper<'a, T, B>))
+}
+
+/// Generic implementation of [`Applicative::apply`] for [`Monad`]s
+///
+/// This generic implementation can be used to define `Applicative::apply`
+/// based on [`Monad::bind`], [`Functor::fmap`], and [`Clone::clone`] when the
+/// applicative functor is also a monad and can be cloned. A more specific
+/// implementation might be more efficient though.
+pub fn monad_apply<'a, T, B>(
+    a: T,
+    f: WrappedMapper<'a, T, B>,
+) -> WrappedValue<'a, T, B>
+where
+    T: 'a + Send + Clone,
+    T: Functor<
+        'a,
+        B,
+        Mapped = WrappedValue<'a, WrappedMapper<'a, T, B>, B>,
+    >,
+    T: Functor<'a, BoxMapper<'a, T, B>>,
+    WrappedMapper<'a, T, B>: Monad<'a, B>,
+    <T as Functor<'a, BoxMapper<'a, T, B>>>::Mapped:
+        Functor<'a, B, Inner = BoxMapper<'a, T, B>>,
+{
+    f.bind(move |inner| a.clone().fmap(inner))
 }

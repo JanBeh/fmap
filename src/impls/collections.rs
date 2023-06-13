@@ -75,6 +75,22 @@ where
     }
 }
 
+impl<'a, A, B> Applicative<'a, B> for VecDeque<A>
+where
+    A: 'a + Clone,
+    B: 'a,
+{
+    fn apply(self, f: VecDeque<BoxMapper<'a, Self, B>>) -> VecDeque<B> {
+        let mut vec = VecDeque::with_capacity(f.len() * self.len());
+        for mut func in f.into_iter() {
+            for item in self.iter().cloned() {
+                vec.push_back((func)(item))
+            }
+        }
+        vec
+    }
+}
+
 impl<'a, A, B> Functor<'a, B> for LinkedList<A>
 where
     A: 'a,
@@ -139,6 +155,25 @@ where
             }
         }
         list
+    }
+}
+
+impl<'a, A, B> Applicative<'a, B> for LinkedList<A>
+where
+    A: 'a + Clone,
+    B: 'a,
+{
+    fn apply(
+        self,
+        f: LinkedList<BoxMapper<'a, Self, B>>,
+    ) -> LinkedList<B> {
+        let mut vec = LinkedList::new();
+        for mut func in f.into_iter() {
+            for item in self.iter().cloned() {
+                vec.push_back((func)(item))
+            }
+        }
+        vec
     }
 }
 

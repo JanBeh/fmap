@@ -60,3 +60,13 @@ where
         self.and_then(f)
     }
 }
+
+impl<'a, A, B> Applicative<'a, B> for Option<A>
+where
+    A: 'a,
+    B: 'a,
+{
+    fn apply(self, f: Option<BoxMapper<'a, Self, B>>) -> Option<B> {
+        f.and_then(move |inner| self.map(inner))
+    }
+}

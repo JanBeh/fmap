@@ -112,3 +112,44 @@ where
         Box::pin(async move { f(self.await).await })
     }
 }
+
+impl<'a, A, B> Applicative<'a, B>
+    for Pin<Box<dyn 'a + Future<Output = A>>>
+where
+    A: 'a,
+    B: 'a,
+{
+    fn apply(
+        self,
+        f: Pin<Box<dyn 'a + Future<Output = BoxMapper<'a, Self, B>>>>,
+    ) -> Pin<Box<dyn 'a + Future<Output = B>>> {
+        Box::pin(async move {
+            // TODO: add test for `await` order
+            let mut mapper = f.await;
+            let a = self.await;
+            mapper(a)
+        })
+    }
+}
+impl<'a, A, B> Applicative<'a, B>
+    for Pin<Box<dyn 'a + Future<Output = A> + Send>>
+where
+    A: 'a,
+    B: 'a + Send,
+{
+    fn apply(
+        self,
+        f: Pin<
+            Box<
+                dyn 'a + Future<Output = BoxMapper<'a, Self, B>> + Send,
+            >,
+        >,
+    ) -> Pin<Box<dyn 'a + Future<Output = B> + Send>> {
+        Box::pin(async move {
+            // TODO: add test for `await` order
+            let mut mapper = f.await;
+            let a = self.await;
+            mapper(a)
+        })
+    }
+}
