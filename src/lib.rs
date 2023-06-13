@@ -458,9 +458,9 @@ where
 
 /// Generic implementation of [`Functor::fmap`] for [`Monad`]s
 ///
-/// This generic implementation can be used to define `Functor::fmap` when the
-/// functor is also a monad. A more specific implementation might be more
-/// efficient though.
+/// This generic implementation can be used to define `Functor::fmap` based on
+/// [`Monad::bind`] and [`Pure::pure`] when the functor is also a monad. A more
+/// specific implementation might be more efficient though.
 pub fn monad_fmap<'a, T, B, F>(monad: T, mut f: F) -> T::Mapped
 where
     T: Monad<'a, B>,
