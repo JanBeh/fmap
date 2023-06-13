@@ -451,9 +451,6 @@ where
     A: 'a,
 {
     type InnerMonad = A;
-    fn mjoin(self) -> A {
-        self.bind(|x| x)
-    }
 }
 
 /// Generic implementation of [`Functor::fmap`] for [`Monad`]s
