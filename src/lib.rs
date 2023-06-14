@@ -334,6 +334,13 @@ where
 /// Use this trait to implement a monad's "return" function.
 ///
 /// [`pure`]: Self::pure
+///
+/// # Examples
+///
+/// ```
+/// use fmap::Pure;
+/// assert_eq!(Vec::<i32>::pure(6), vec![6]);
+/// ```
 pub trait Pure<'a, B>
 where
     Self: Functor<'a, B>,
