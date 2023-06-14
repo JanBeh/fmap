@@ -85,9 +85,6 @@ where
 /// Type parameter `B` specifies the new inner type *after* the [`fmap`]
 /// operation.
 ///
-/// All implementations must also provide a [`FunctorSelf`] implementation
-/// (see example below).
-///
 /// [`fmap`]: Self::fmap
 ///
 /// # Examples
