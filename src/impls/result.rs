@@ -9,7 +9,7 @@ where
 {
     type Inner = A;
     type Mapped = Result<B, E>;
-    fn fmap<'b, F>(self, f: F) -> Self::Mapped
+    fn fmap<F>(self, f: F) -> Self::Mapped
     where
         F: 'a + Send + FnMut(Self::Inner) -> B,
     {

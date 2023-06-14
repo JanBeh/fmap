@@ -43,7 +43,7 @@ where
     A: 'a,
     B: 'a,
 {
-    fn pure<'b>(b: B) -> Self::Mapped {
+    fn pure(b: B) -> Self::Mapped {
         vec![b]
     }
 }

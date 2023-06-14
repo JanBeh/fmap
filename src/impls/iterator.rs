@@ -73,7 +73,7 @@ where
     A: 'a,
     B: 'a,
 {
-    fn pure<'b>(b: B) -> Self::Mapped {
+    fn pure(b: B) -> Self::Mapped {
         Box::new(std::iter::once(b))
     }
 }
