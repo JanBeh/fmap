@@ -34,6 +34,7 @@
 //! The [`Monad`] trait describes functors which are also monads. Its
 //! supertrait [`Pure`] allows wrapping a single value. ([`Pure::pure`] is
 //! equivalent to what's usually called "return" in the context of monads).
+//! Nested monads implement [`NestedMonad`] through a blanket implementation.
 //!
 //! # Applicative functors
 //!
