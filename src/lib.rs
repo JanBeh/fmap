@@ -538,6 +538,7 @@ where
 pub trait MonadWithMapper<'a, B>
 where
     Self: Monad<'a, B>,
+    Self: Pure<'a, BoxMapper<'a, Self, B>>,
     B: 'a,
 {
     /// The [`Functor`] with the boxed mapping closure as [inner value]
@@ -548,19 +549,21 @@ where
             B,
             Inner = BoxMapper<'a, Self, B>,
             Mapped = <Self as Functor<'a, B>>::Mapped,
-        > + Monad<'a, B>;
+        > + Monad<'a, B>
+        + Pure<'a, BoxMapper<'a, Self, B>>;
 }
 
 impl<'a, T, B> MonadWithMapper<'a, B> for T
 where
     T: Monad<'a, B>,
-    T: Functor<'a, BoxMapper<'a, T, B>>,
+    T: Pure<'a, BoxMapper<'a, T, B>>,
     <T as Functor<'a, BoxMapper<'a, T, B>>>::Mapped: Functor<
             'a,
             B,
             Inner = BoxMapper<'a, T, B>,
             Mapped = <T as Functor<'a, B>>::Mapped,
-        > + Monad<'a, B>,
+        > + Monad<'a, B>
+        + Pure<'a, BoxMapper<'a, T, B>>,
     B: 'a,
 {
     type MapperMonad = <T as Functor<'a, BoxMapper<'a, T, B>>>::Mapped;
