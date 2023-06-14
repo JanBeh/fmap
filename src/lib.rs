@@ -479,10 +479,6 @@ where
 pub type BoxMapper<'a, T, B> =
     Box<dyn 'a + Send + FnMut(<T as Functor<'a, B>>::Inner) -> B>;
 
-type WrappedValue<'a, T, B> = <T as Functor<'a, B>>::Mapped;
-
-type WrappedMapper<'a, T, B> = WrappedValue<'a, T, BoxMapper<'a, T, B>>;
-
 /// An applicative [`Functor`]
 ///
 /// *Note:* In functional programming, every monad is also an applicative
@@ -515,8 +511,8 @@ where
     /// function
     fn apply(
         self,
-        f: WrappedMapper<'a, Self, B>,
-    ) -> WrappedValue<'a, Self, B>;
+        f: <Self as Functor<'a, BoxMapper<'a, Self, B>>>::Mapped,
+    ) -> <Self as Functor<'a, B>>::Mapped;
 }
 
 /// Generic implementation of [`Functor::fmap`] for [`Applicative`] functors
@@ -525,14 +521,49 @@ where
 /// [`Applicative::apply`] and [`Pure::pure`] when the functor is applicative.
 /// A more specific implementation might be more efficient though.
 pub fn applicative_fmap<'a, T, B, F>(
-    a: T,
+    applicative: T,
     f: F,
-) -> WrappedValue<'a, T, B>
+) -> <T as Functor<'a, B>>::Mapped
 where
     T: Applicative<'a, B>,
     F: 'a + Send + FnMut(<T as Functor<'a, B>>::Inner) -> B,
 {
-    a.apply(T::pure(Box::new(f) as BoxMapper<'a, T, B>))
+    applicative.apply(T::pure(Box::new(f) as BoxMapper<'a, T, B>))
+}
+
+/// A [`Monad`] that can have a [boxed mapping closure] as an [inner value]
+///
+/// [boxed mapping closure]: BoxMapper
+/// [inner value]: Functor::Inner
+pub trait MonadWithMapper<'a, B>
+where
+    Self: Monad<'a, B>,
+    B: 'a,
+{
+    /// The [`Functor`] with the boxed mapping closure as [inner value]
+    ///
+    /// [inner value]: Functor::Inner
+    type MapperMonad: Functor<
+            'a,
+            B,
+            Inner = BoxMapper<'a, Self, B>,
+            Mapped = <Self as Functor<'a, B>>::Mapped,
+        > + Monad<'a, B>;
+}
+
+impl<'a, T, B> MonadWithMapper<'a, B> for T
+where
+    T: Monad<'a, B>,
+    T: Functor<'a, BoxMapper<'a, T, B>>,
+    <T as Functor<'a, BoxMapper<'a, T, B>>>::Mapped: Functor<
+            'a,
+            B,
+            Inner = BoxMapper<'a, T, B>,
+            Mapped = <T as Functor<'a, B>>::Mapped,
+        > + Monad<'a, B>,
+    B: 'a,
+{
+    type MapperMonad = <T as Functor<'a, BoxMapper<'a, T, B>>>::Mapped;
 }
 
 /// Generic implementation of [`Applicative::apply`] for [`Monad`]s
@@ -542,20 +573,12 @@ where
 /// applicative functor is also a monad and can be cloned. A more specific
 /// implementation might be more efficient though.
 pub fn monad_apply<'a, T, B>(
-    a: T,
-    f: WrappedMapper<'a, T, B>,
-) -> WrappedValue<'a, T, B>
+    monad: T,
+    f: T::MapperMonad,
+) -> <T as Functor<'a, B>>::Mapped
 where
     T: 'a + Send + Clone,
-    T: Functor<
-        'a,
-        B,
-        Mapped = WrappedValue<'a, WrappedMapper<'a, T, B>, B>,
-    >,
-    T: Functor<'a, BoxMapper<'a, T, B>>,
-    WrappedMapper<'a, T, B>: Monad<'a, B>,
-    <T as Functor<'a, BoxMapper<'a, T, B>>>::Mapped:
-        Functor<'a, B, Inner = BoxMapper<'a, T, B>>,
+    T: MonadWithMapper<'a, B>,
 {
-    f.bind(move |inner| a.clone().fmap(inner))
+    f.bind(move |inner| monad.clone().fmap(inner))
 }
