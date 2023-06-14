@@ -347,7 +347,7 @@ where
 
 /// A [`Functor`] that is also a monad
 ///
-/// *Note:* The `Monad` trait deliberately does not imply [`Applicative`].
+/// *Note:* The `Monad` trait deliberately does not imply `Applicative`.
 /// See documentation on [`Applicative`] for further information.
 ///
 /// The method [`Monad::bind`] is a generalization of [`Option::and_then`] and
@@ -488,7 +488,17 @@ pub type BoxMapper<'a, T, B> =
 /// functional programming) values in Rust may be moved and only used once. The
 /// `Applicative` implementation for `Vec<A>` demands `A: Clone`, for example,
 /// while the `Monad` implementation for `Vec<A>` does not put any bounds on
-/// `A`.
+/// `A`. The requirements for a monad to be able to implement
+/// [`Applicative::apply`] through [`monad_apply`] are:
+///
+/// * The monad must have a lifetime of `'a`.
+/// * The monad must be [`Send`].
+/// * The monad must be [`Clone`].
+/// * The monad must support a [boxed mapper] as [inner value] (which is the
+///   case when it implements the [`MonadWithMapper`] trait).
+///
+/// [boxed mapper]: BoxMapper
+/// [inner value]: Functor::Inner
 ///
 /// # Examples
 ///
@@ -533,6 +543,8 @@ where
 
 /// A [`Monad`] that can have a [boxed mapping closure] as an [inner value]
 ///
+/// This trait is one of [`monad_apply`]'s bounds.
+///
 /// [boxed mapping closure]: BoxMapper
 /// [inner value]: Functor::Inner
 pub trait MonadWithMapper<'a, B>
@@ -541,7 +553,7 @@ where
     Self: Pure<'a, BoxMapper<'a, Self, B>>,
     B: 'a,
 {
-    /// The [`Functor`] with the boxed mapping closure as [inner value]
+    /// The [`Monad`] with the boxed mapping closure as [inner value]
     ///
     /// [inner value]: Functor::Inner
     type MapperMonad: Functor<
@@ -573,8 +585,8 @@ where
 ///
 /// This generic implementation can be used to define `Applicative::apply`
 /// based on [`Monad::bind`], [`Functor::fmap`], and [`Clone::clone`] when the
-/// applicative functor is also a monad and can be cloned. A more specific
-/// implementation might be more efficient though.
+/// applicative functor is also a monad and is `Send` and `Clone`. A more
+/// specific implementation might be more efficient.
 pub fn monad_apply<'a, T, B>(
     monad: T,
     f: T::MapperMonad,
