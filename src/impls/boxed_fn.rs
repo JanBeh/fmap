@@ -293,3 +293,56 @@ where
         Box::new(move |_| b.clone())
     }
 }
+
+impl<'a, A, B> Applicative<'a, B> for Box<dyn 'a + FnOnce() -> A>
+where
+    A: 'a,
+    B: 'a,
+{
+    fn apply(
+        self,
+        f: Box<dyn 'a + FnOnce() -> BoxMapper<'a, Self, B>>,
+    ) -> Box<dyn 'a + FnOnce() -> B> {
+        Box::new(move || (f())((self)()))
+    }
+}
+impl<'a, A, B> Applicative<'a, B> for Box<dyn 'a + Send + FnOnce() -> A>
+where
+    A: 'a,
+    B: 'a + Send,
+{
+    fn apply(
+        self,
+        f: Box<dyn 'a + Send + FnOnce() -> BoxMapper<'a, Self, B>>,
+    ) -> Box<dyn 'a + Send + FnOnce() -> B> {
+        Box::new(move || (f())((self)()))
+    }
+}
+
+impl<'a, A, B, X> Applicative<'a, B> for Box<dyn 'a + FnOnce(X) -> A>
+where
+    A: 'a,
+    B: 'a,
+    X: 'a + Clone,
+{
+    fn apply(
+        self,
+        f: Box<dyn 'a + FnOnce(X) -> BoxMapper<'a, Self, B>>,
+    ) -> Box<dyn 'a + FnOnce(X) -> B> {
+        Box::new(move |x| (f(x.clone()))((self)(x)))
+    }
+}
+impl<'a, A, B, X> Applicative<'a, B>
+    for Box<dyn 'a + Send + FnOnce(X) -> A>
+where
+    A: 'a,
+    B: 'a + Send,
+    X: 'a + Clone,
+{
+    fn apply(
+        self,
+        f: Box<dyn 'a + Send + FnOnce(X) -> BoxMapper<'a, Self, B>>,
+    ) -> Box<dyn 'a + Send + FnOnce(X) -> B> {
+        Box::new(move |x| (f(x.clone()))((self)(x)))
+    }
+}
