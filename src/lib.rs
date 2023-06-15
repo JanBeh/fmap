@@ -1,5 +1,8 @@
 //! Functors and monads in Rust
 //!
+//! *Note:* This crate has some limitations. Be sure to read the "Caveats"
+//! section below.
+//!
 //! # Functors
 //!
 //! The following traits are provided to describe functors:
@@ -39,6 +42,47 @@
 //! # Applicative functors
 //!
 //! For applicative functors see the [`Applicative`] trait.
+//!
+//! # Caveats
+//!
+//! From the trait definitions in this crate, Rust can't always deduce type
+//! equality or deduce the implemented traits automatically. This may result in
+//! complex (possibly viral) type bounds being required, which may strongly
+//! **limit the usability of this crate.** Consider the following examples:
+//!
+//! ```
+//! # use fmap::Functor;
+//! fn foo1<'a, T>(functor: T) -> T
+//! where
+//!     T: Functor<'a, u16, Inner = u8>,
+//! {
+//!     functor.fmap(|x| x as u16).fmap(|x| x as u8) // works
+//! }
+//! ```
+//!
+//! ```compile_fail
+//! # use fmap::Functor;
+//! fn foo2<'a, T>(functor: T)
+//! where
+//!     T: Functor<'a, u16, Inner = u8>,
+//!     T: Functor<'a, u32, Inner = u16>,
+//! {
+//!     let _ = functor.fmap(|x| x as u16).fmap(|x| x as u32); // fails
+//! }
+//! ```
+//!
+//! ```
+//! # use fmap::Functor;
+//! fn foo3<'a, T>(functor: T)
+//! where
+//!     T: Functor<'a, u16, Inner = u8>,
+//!     T::Mapped: Functor<'a, u32, Inner = u16>, // this is needed instead
+//! {
+//!     let _ = functor.fmap(|x| x as u16).fmap(|x| x as u32);
+//! }
+//! ```
+//!
+//! Also see [`FunctorSelf`] for a workaround in the most simple cases.
 
 #![warn(missing_docs)]
 
