@@ -143,7 +143,7 @@ where
     ///
     /// This method does a no-op conversion into an associated type (usually
     /// equal to `Self`, but that's not always known to the compiler) whose
-    /// [inner type] can be mapped to any other type.
+    /// [inner type] can be mapped to any type `D`.
     ///
     /// [inner type]: Functor::Inner
     fn change_target<D>(
