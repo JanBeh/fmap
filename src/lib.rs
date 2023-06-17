@@ -82,13 +82,19 @@
 //! }
 //! ```
 //!
-//! Also see [`FunctorSelf`] for a workaround in the most simple cases.
+//! See [`FunctorSelf`] for a workaround in the most simple cases, and take a
+//! look at [`UniversalFunctor`] for a workaround that may be used when
+//! functors have no bounds on their inner type.
 
 #![warn(missing_docs)]
 
 mod impls;
 #[cfg(test)]
 mod tests;
+pub mod universal;
+
+#[cfg(doc)]
+use universal::UniversalFunctor;
 
 /// A [`Functor`] that can be mapped to itself
 ///
