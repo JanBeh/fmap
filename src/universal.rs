@@ -112,7 +112,7 @@ pub trait UniversalFunctorTyCon<'a> {
 ///         .change_target()
 ///         .fmap(|x| x as u16)
 ///         .change_target()
-///         .fmap(|x| (x + 10) as u32)
+///         .fmap(|x| ((x + 10) % 256) as u32)
 ///         .change_target()
 ///         .fmap(|x| format!("{x}"))
 ///         .change_target()
