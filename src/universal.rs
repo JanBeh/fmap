@@ -16,19 +16,19 @@ use super::*;
 ///
 /// This is a helper trait.
 pub trait UniversalFunctorTyCon<'a> {
-    /// [`Functor`] with [inner type] `C`,
-    /// where the inner type can be mapped to `D`
+    /// [`Functor`] with [inner type] `A`,
+    /// where the inner type can be mapped to `B`
     ///
     /// [inner type]: Functor::Inner
-    type Functor<C, D>: UniversalFunctor<
+    type Functor<A, B>: UniversalFunctor<
         'a,
-        D,
-        Inner = C,
+        B,
+        Inner = A,
         FunctorTyCon = Self,
     >
     where
-        C: 'a,
-        D: 'a;
+        A: 'a,
+        B: 'a;
 }
 
 /// A [`Functor`] whose [inner type] can be mapped to any other type
@@ -77,10 +77,10 @@ pub trait UniversalFunctorTyCon<'a> {
 /// }
 ///
 /// impl<'a> UniversalFunctorTyCon<'a> for private::Option_ {
-///     type Functor<C, D> = Option<C>
+///     type Functor<A, B> = Option<A>
 ///     where
-///         C: 'a,
-///         D: 'a;
+///         A: 'a,
+///         B: 'a;
 /// }
 ///
 /// impl<'a, A, B> UniversalFunctor<'a, B> for Option<A>
@@ -89,7 +89,7 @@ pub trait UniversalFunctorTyCon<'a> {
 ///     B: 'a,
 /// {
 ///     type FunctorTyCon = private::Option_;
-///     fn change_target<D>(self) -> Self {
+///     fn change_target<T>(self) -> Self {
 ///         self
 ///     }
 ///     fn from_mapped(this: Self) -> Self {
@@ -139,18 +139,18 @@ where
     /// (`UniversalFunctor`)
     type FunctorTyCon: UniversalFunctorTyCon<'a>;
 
-    /// Return `self`, but as a type whose [inner type] can be mapped to `D`
+    /// Return `self`, but as a type whose [inner type] can be mapped to `T`
     ///
     /// This method does a no-op conversion into an associated type (usually
     /// equal to `Self`, but that's not always known to the compiler) whose
-    /// [inner type] can be mapped to any type `D`.
+    /// [inner type] can be mapped to any type `T`.
     ///
     /// [inner type]: Functor::Inner
-    fn change_target<D>(
+    fn change_target<T>(
         self,
     ) -> <Self::FunctorTyCon as UniversalFunctorTyCon<'a>>::Functor<
         Self::Inner,
-        D,
+        T,
     >;
 
     /// Convert a mapped type back to `Self` if the [inner type] and mapping
@@ -190,7 +190,7 @@ mod impls {
                 B: 'a,
             {
                 type FunctorTyCon = $tycon;
-                fn change_target<D>(self) -> Self {
+                fn change_target<T>(self) -> Self {
                     self
                 }
                 fn from_mapped(this: Self) -> Self {
@@ -224,7 +224,7 @@ mod impls {
                 B: 'a,
             {
                 type FunctorTyCon = $tycon<X>;
-                fn change_target<D>(self) -> Self {
+                fn change_target<T>(self) -> Self {
                     self
                 }
                 fn from_mapped(this: Self) -> Self {
@@ -288,10 +288,10 @@ mod impls {
     where
         E: 'a,
     {
-        type Functor<C, D> = Result<C, E>
+        type Functor<A, B> = Result<A, E>
         where
-            C: 'a,
-            D: 'a;
+            A: 'a,
+            B: 'a;
     }
     impl<'a, A, B, E> UniversalFunctor<'a, B> for Result<A, E>
     where
@@ -300,7 +300,7 @@ mod impls {
         E: 'a,
     {
         type FunctorTyCon = Result_<E>;
-        fn change_target<D>(self) -> Self {
+        fn change_target<T>(self) -> Self {
             self
         }
         fn from_mapped(this: Self) -> Self {
@@ -313,10 +313,10 @@ mod impls {
     where
         K: 'a + Eq + Hash,
     {
-        type Functor<C, D> = HashMap<K, C>
+        type Functor<A, B> = HashMap<K, A>
         where
-            C: 'a,
-            D: 'a;
+            A: 'a,
+            B: 'a;
     }
     impl<'a, K, A, B> UniversalFunctor<'a, B> for HashMap<K, A>
     where
@@ -325,7 +325,7 @@ mod impls {
         B: 'a,
     {
         type FunctorTyCon = HashMap_<K>;
-        fn change_target<D>(self) -> Self {
+        fn change_target<T>(self) -> Self {
             self
         }
         fn from_mapped(this: Self) -> Self {
@@ -338,10 +338,10 @@ mod impls {
     where
         K: 'a + Ord,
     {
-        type Functor<C, D> = BTreeMap<K, C>
+        type Functor<A, B> = BTreeMap<K, A>
         where
-            C: 'a,
-            D: 'a;
+            A: 'a,
+            B: 'a;
     }
     impl<'a, K, A, B> UniversalFunctor<'a, B> for BTreeMap<K, A>
     where
@@ -350,7 +350,7 @@ mod impls {
         B: 'a,
     {
         type FunctorTyCon = BTreeMap_<K>;
-        fn change_target<D>(self) -> Self {
+        fn change_target<T>(self) -> Self {
             self
         }
         fn from_mapped(this: Self) -> Self {
