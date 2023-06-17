@@ -33,8 +33,8 @@ pub trait UniversalFunctorTyCon<'a> {
 
 /// A [`Functor`] whose [inner type] can be mapped to any other type
 ///
-/// *Note:* This trait is not implemented for many generic types yet and mostly
-/// serves as a proof-of-concept.
+/// *Note:* All traits in module [`universal`] are incomplete/experimental yet
+/// and mostly serves as a proof-of-concept.
 ///
 /// This trait helps to circumvent some of the limitations described in the
 /// ["Caveats" section] of the top-level module documentation.
@@ -165,56 +165,150 @@ where
     ) -> Self;
 }
 
-/// Implement [`UniversalFunctor`] for simple generic types
-#[macro_export]
-macro_rules! impl_universal_functor {
-    ($tycon:ident, $gentype:ident) => {
-        pub struct $tycon;
-
-        impl<'a> $crate::universal::UniversalFunctorTyCon<'a>
-            for $tycon
-        {
-            type Functor<C, D>
-            where
-                C: 'a,
-                D: 'a,
-            = $gentype<C>;
-        }
-
-        impl<'a, A, B> $crate::universal::UniversalFunctor<'a, B>
-            for $gentype<A>
-        where
-            A: 'a,
-            B: 'a,
-        {
-            type FunctorTyCon = $tycon;
-            fn change_target<D>(self) -> Self {
-                self
-            }
-            fn from_mapped(this: Self) -> Self {
-                this
-            }
-        }
-    };
-}
-
 mod impls {
     // TODO: remove this workaround for rustfmt bug #5580 (see also #5778)
     #![allow(deprecated_where_clause_location)]
 
+    macro_rules! impl_universal_functor {
+        ($tycon:ident, $type:ty) => {
+            pub struct $tycon;
+
+            impl<'a> $crate::universal::UniversalFunctorTyCon<'a>
+                for $tycon
+            {
+                type Functor<A, B>
+                where
+                    A: 'a,
+                    B: 'a,
+                = $type;
+            }
+
+            impl<'a, A, B> $crate::universal::UniversalFunctor<'a, B>
+                for $type
+            where
+                A: 'a,
+                B: 'a,
+            {
+                type FunctorTyCon = $tycon;
+                fn change_target<D>(self) -> Self {
+                    self
+                }
+                fn from_mapped(this: Self) -> Self {
+                    this
+                }
+            }
+        };
+    }
+
+    macro_rules! impl_universal_functor_x {
+        ($tycon:ident, $type:ty) => {
+            pub struct $tycon<X>(::std::marker::PhantomData<X>);
+
+            impl<'a, X> $crate::universal::UniversalFunctorTyCon<'a>
+                for $tycon<X>
+            where
+                X: 'a,
+            {
+                type Functor<A, B>
+                where
+                    A: 'a,
+                    B: 'a,
+                = $type;
+            }
+
+            impl<'a, X, A, B> $crate::universal::UniversalFunctor<'a, B>
+                for $type
+            where
+                X: 'a,
+                A: 'a,
+                B: 'a,
+            {
+                type FunctorTyCon = $tycon<X>;
+                fn change_target<D>(self) -> Self {
+                    self
+                }
+                fn from_mapped(this: Self) -> Self {
+                    this
+                }
+            }
+        };
+    }
+
     use super::*;
 
     use std::collections::{BTreeMap, HashMap, LinkedList, VecDeque};
+    use std::future::Future;
     use std::hash::Hash;
     use std::marker::PhantomData;
+    use std::pin::Pin;
 
-    impl_universal_functor!(Option_, Option);
-    impl_universal_functor!(Vec_, Vec);
-    impl_universal_functor!(VecDeque_, VecDeque);
-    impl_universal_functor!(LinkedList_, LinkedList);
+    impl_universal_functor!(Option_, Option<A>);
+    impl_universal_functor!(Vec_, Vec<A>);
+    impl_universal_functor!(VecDeque_, VecDeque<A>);
+    impl_universal_functor!(LinkedList_, LinkedList<A>);
+    impl_universal_functor!(
+        Iterator_,
+        Box<dyn 'a + Iterator<Item = A>>
+    );
+    impl_universal_functor!(
+        IteratorSend_,
+        Box<dyn 'a + Send + Iterator<Item = A>>
+    );
+    impl_universal_functor!(
+        Future_,
+        Pin<Box<dyn 'a + Future<Output = A>>>
+    );
+    impl_universal_functor!(
+        FutureSend_,
+        Pin<Box<dyn 'a + Send + Future<Output = A>>>
+    );
+    impl_universal_functor!(FnOnce_, Box<dyn 'a + FnOnce() -> A>);
+    impl_universal_functor!(
+        FnOnceSend_,
+        Box<dyn 'a + Send + FnOnce() -> A>
+    );
+    impl_universal_functor!(FnMut_, Box<dyn 'a + FnMut() -> A>);
+    impl_universal_functor!(
+        FnMutSend_,
+        Box<dyn 'a + Send + FnMut() -> A>
+    );
+    impl_universal_functor_x!(FnOnceX_, Box<dyn 'a + FnOnce(X) -> A>);
+    impl_universal_functor_x!(
+        FnOnceSendX_,
+        Box<dyn 'a + Send + FnOnce(X) -> A>
+    );
+    impl_universal_functor_x!(FnMutX_, Box<dyn 'a + FnMut(X) -> A>);
+    impl_universal_functor_x!(
+        FnMutSendX_,
+        Box<dyn 'a + Send + FnMut(X) -> A>
+    );
+
+    pub struct Result_<E>(PhantomData<E>);
+    impl<'a, E> UniversalFunctorTyCon<'a> for Result_<E>
+    where
+        E: 'a,
+    {
+        type Functor<C, D> = Result<C, E>
+        where
+            C: 'a,
+            D: 'a;
+    }
+    impl<'a, A, B, E> UniversalFunctor<'a, B> for Result<A, E>
+    where
+        A: 'a,
+        B: 'a,
+        E: 'a,
+    {
+        type FunctorTyCon = Result_<E>;
+        fn change_target<D>(self) -> Self {
+            self
+        }
+        fn from_mapped(this: Self) -> Self {
+            this
+        }
+    }
 
     pub struct HashMap_<K>(PhantomData<K>);
-
     impl<'a, K> UniversalFunctorTyCon<'a> for HashMap_<K>
     where
         K: 'a + Eq + Hash,
@@ -224,7 +318,6 @@ mod impls {
             C: 'a,
             D: 'a;
     }
-
     impl<'a, K, A, B> UniversalFunctor<'a, B> for HashMap<K, A>
     where
         K: 'a + Eq + Hash,
@@ -241,7 +334,6 @@ mod impls {
     }
 
     pub struct BTreeMap_<K>(PhantomData<K>);
-
     impl<'a, K> UniversalFunctorTyCon<'a> for BTreeMap_<K>
     where
         K: 'a + Ord,
@@ -251,7 +343,6 @@ mod impls {
             C: 'a,
             D: 'a;
     }
-
     impl<'a, K, A, B> UniversalFunctor<'a, B> for BTreeMap<K, A>
     where
         K: 'a + Ord,
