@@ -89,10 +89,10 @@ pub trait UniversalFunctorTyCon<'a> {
 ///     B: 'a,
 /// {
 ///     type FunctorTyCon = private::Option_;
-///     fn change_target<T>(self) -> Self {
+///     fn change_functor_target<T>(self) -> Self {
 ///         self
 ///     }
-///     fn from_mapped(this: Self) -> Self {
+///     fn from_mapped_functor(this: Self) -> Self {
 ///         this
 ///     }
 /// }
@@ -109,15 +109,15 @@ pub trait UniversalFunctorTyCon<'a> {
 ///     T: UniversalFunctor<'a, u8, Inner = u8>,
 /// {
 ///     let functor = functor
-///         .change_target()
+///         .change_functor_target()
 ///         .fmap(|x| x as u16)
-///         .change_target()
+///         .change_functor_target()
 ///         .fmap(|x| ((x + 10) % 256) as u32)
-///         .change_target()
+///         .change_functor_target()
 ///         .fmap(|x| format!("{x}"))
-///         .change_target()
+///         .change_functor_target()
 ///         .fmap(|x| x.parse::<u8>().unwrap());
-///     T::from_mapped(functor)
+///     T::from_mapped_functor(functor)
 /// }
 ///
 /// assert_eq!(generic_round_trip_from_u8(Some(99)), Some(109));
@@ -143,22 +143,92 @@ where
     ///
     /// This method does a no-op conversion into an associated type (usually
     /// equal to `Self`, but that's not always known to the compiler) whose
-    /// [inner type] can be mapped to any type `T`.
+    /// [inner type] can be mapped to any type `T` (with lifetime `'a`).
     ///
     /// [inner type]: Functor::Inner
-    fn change_target<T>(
+    fn change_functor_target<T>(
         self,
     ) -> <Self::FunctorTyCon as UniversalFunctorTyCon<'a>>::Functor<
         Self::Inner,
         T,
-    >;
+    >
+    where
+        T: 'a;
 
     /// Convert a mapped type back to `Self` if the [inner type] and mapping
     /// target matches
     ///
     /// [inner type]: Functor::Inner
-    fn from_mapped(
+    fn from_mapped_functor(
         this: <Self::FunctorTyCon as UniversalFunctorTyCon<'a>>::Functor<
+            Self::Inner,
+            Self::Inner,
+        >,
+    ) -> Self;
+}
+
+/// Same as [`UniversalFunctorTyCon`] but for [`Monad`]s
+pub trait UniversalMonadTyCon<'a> {
+    /// [`Monad`] with [inner type] `A`,
+    /// where the inner type can be mapped to `B`
+    ///
+    /// [inner type]: Functor::Inner
+    type Monad<A, B>: UniversalMonad<
+        'a,
+        B,
+        Inner = A,
+        MonadTyCon = Self,
+    >
+    where
+        A: 'a + Send,
+        B: 'a + Send;
+}
+
+/// Same as [`UniversalFunctor`] but for [`Monad`]s
+///
+/// *Note:* Opposed to `UniversalFunctor`, there is an additional [`Send`]
+/// bound on the [inner type]s here.
+///
+/// [inner type]: Functor::Inner
+pub trait UniversalMonad<'a, B>
+where
+    Self: Monad<
+        'a,
+        B,
+        Mapped = <Self::MonadTyCon as UniversalMonadTyCon<'a>>::Monad<
+            B,
+            B,
+        >,
+    >,
+    <Self as Functor<'a, B>>::Inner: Send,
+    B: 'a + Send,
+{
+    /// A type constructor whose created types implement this trait
+    /// (`UniversalMonad`)
+    type MonadTyCon: UniversalMonadTyCon<'a>;
+
+    /// Return `self`, but as a type whose [inner type] can be mapped to `T`
+    ///
+    /// This method does a no-op conversion into an associated type (usually
+    /// equal to `Self`, but that's not always known to the compiler) whose
+    /// [inner type] can be mapped to any type `T` (that is `'a + Send`).
+    ///
+    /// [inner type]: Functor::Inner
+    fn change_monad_target<T>(
+        self,
+    ) -> <Self::MonadTyCon as UniversalMonadTyCon<'a>>::Monad<
+        Self::Inner,
+        T,
+    >
+    where
+        T: 'a + Send;
+
+    /// Convert a mapped type back to `Self` if the [inner type] and mapping
+    /// target matches
+    ///
+    /// [inner type]: Functor::Inner
+    fn from_mapped_monad(
+        this: <Self::MonadTyCon as UniversalMonadTyCon<'a>>::Monad<
             Self::Inner,
             Self::Inner,
         >,
@@ -190,10 +260,13 @@ mod impls {
                 B: 'a,
             {
                 type FunctorTyCon = $tycon;
-                fn change_target<T>(self) -> Self {
+                fn change_functor_target<T>(self) -> Self
+                where
+                    T: 'a,
+                {
                     self
                 }
-                fn from_mapped(this: Self) -> Self {
+                fn from_mapped_functor(this: Self) -> Self {
                     this
                 }
             }
@@ -224,10 +297,13 @@ mod impls {
                 B: 'a,
             {
                 type FunctorTyCon = $tycon<X>;
-                fn change_target<T>(self) -> Self {
+                fn change_functor_target<T>(self) -> Self
+                where
+                    T: 'a,
+                {
                     self
                 }
-                fn from_mapped(this: Self) -> Self {
+                fn from_mapped_functor(this: Self) -> Self {
                     this
                 }
             }
@@ -300,10 +376,10 @@ mod impls {
         E: 'a,
     {
         type FunctorTyCon = Result_<E>;
-        fn change_target<T>(self) -> Self {
+        fn change_functor_target<T>(self) -> Self {
             self
         }
-        fn from_mapped(this: Self) -> Self {
+        fn from_mapped_functor(this: Self) -> Self {
             this
         }
     }
@@ -325,10 +401,10 @@ mod impls {
         B: 'a,
     {
         type FunctorTyCon = HashMap_<K>;
-        fn change_target<T>(self) -> Self {
+        fn change_functor_target<T>(self) -> Self {
             self
         }
-        fn from_mapped(this: Self) -> Self {
+        fn from_mapped_functor(this: Self) -> Self {
             this
         }
     }
@@ -350,10 +426,90 @@ mod impls {
         B: 'a,
     {
         type FunctorTyCon = BTreeMap_<K>;
-        fn change_target<T>(self) -> Self {
+        fn change_functor_target<T>(self) -> Self {
             self
         }
-        fn from_mapped(this: Self) -> Self {
+        fn from_mapped_functor(this: Self) -> Self {
+            this
+        }
+    }
+
+    macro_rules! impl_universal_monad {
+        ($tycon:ident, $type:ty) => {
+            pub struct $tycon;
+
+            impl<'a> $crate::universal::UniversalMonadTyCon<'a>
+                for $tycon
+            {
+                type Monad<A, B>
+                where
+                    A: 'a + Send,
+                    B: 'a + Send,
+                = $type;
+            }
+
+            impl<'a, A, B> $crate::universal::UniversalMonad<'a, B>
+                for $type
+            where
+                A: 'a + Send,
+                B: 'a + Send,
+            {
+                type MonadTyCon = $tycon;
+                fn change_monad_target<T>(self) -> Self
+                where
+                    T: 'a + Send,
+                {
+                    self
+                }
+                fn from_mapped_monad(this: Self) -> Self {
+                    this
+                }
+            }
+        };
+    }
+
+    impl_universal_monad!(OptionM_, Option<A>);
+    impl_universal_monad!(VecM_, Vec<A>);
+    impl_universal_monad!(VecDequeM_, VecDeque<A>);
+    impl_universal_monad!(LinkedListM_, LinkedList<A>);
+    impl_universal_monad!(IteratorM_, Box<dyn 'a + Iterator<Item = A>>);
+    impl_universal_monad!(
+        IteratorSendM_,
+        Box<dyn 'a + Send + Iterator<Item = A>>
+    );
+    impl_universal_monad!(
+        FutureM_,
+        Pin<Box<dyn 'a + Future<Output = A>>>
+    );
+    impl_universal_monad!(
+        FutureSendM_,
+        Pin<Box<dyn 'a + Send + Future<Output = A>>>
+    );
+
+    pub struct ResultM_<E>(PhantomData<E>);
+    impl<'a, E> UniversalMonadTyCon<'a> for ResultM_<E>
+    where
+        E: 'a + Send,
+    {
+        type Monad<A, B> = Result<A, E>
+        where
+            A: 'a + Send,
+            B: 'a + Send;
+    }
+    impl<'a, A, B, E> UniversalMonad<'a, B> for Result<A, E>
+    where
+        A: 'a + Send,
+        B: 'a + Send,
+        E: 'a + Send,
+    {
+        type MonadTyCon = ResultM_<E>;
+        fn change_monad_target<T>(self) -> Self
+        where
+            T: 'a + Send,
+        {
+            self
+        }
+        fn from_mapped_monad(this: Self) -> Self {
             this
         }
     }
