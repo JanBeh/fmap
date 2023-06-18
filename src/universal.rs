@@ -139,6 +139,26 @@ where
     /// (`UniversalFunctor`)
     type FunctorTyCon: UniversalFunctorTyCon<'a>;
 
+    // TODO: The following would allow us to get rid of `from_mapped_functor`,
+    // but it breaks type inference:
+    //
+    // type FunctorTyCon: UniversalFunctorTyCon<
+    //     'a,
+    //     Functor<Self::Inner, Self::Inner> = Self,
+    // >;
+    //
+    // TODO: The following might solve even more issues, but it's not accepted
+    // by the compiler:
+    //
+    // type FunctorTyCon: UniversalFunctorTyCon<
+    //     'a,
+    //     Functor<Self::Inner, Self::Inner> = Self,
+    //     Functor<Self::Inner, B> = Self,
+    // >;
+    //
+    // error[E0719]: the value of the associated type `Functor` (from trait
+    // `universal::UniversalFunctorTyCon`) is already specified
+
     /// Return `self`, but as a type whose [inner type] can be mapped to `T`
     ///
     /// This method does a no-op conversion into an associated type (usually
