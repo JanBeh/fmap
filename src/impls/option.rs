@@ -1,72 +1,50 @@
-//! Implementations for [`Option`]
-
 use super::*;
 
-impl<'a, A, B> Functor<'a, B> for Option<A>
+mod ty_con {
+    pub struct Option;
+}
+
+impl<'a> MonadTyCon<'a> for ty_con::Option {
+    type Outer<T> = Option<T>
+    where
+        T: 'a + Send;
+}
+
+impl<'a, A> Monad<'a> for Option<A>
 where
-    A: 'a,
-    B: 'a,
+    A: 'a + Send,
 {
     type Inner = A;
-    type Mapped = Option<B>;
-    fn fmap<F>(self, f: F) -> Self::Mapped
+    type TyCon = ty_con::Option;
+    fn fmap<B, F>(
+        self,
+        f: F,
+    ) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
     where
+        B: 'a + Send,
         F: 'a + Send + FnMut(Self::Inner) -> B,
     {
         self.map(f)
     }
-    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    fn pure<B, F>(b: B) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
     where
-        F: 'a + Send + FnMut(&mut Self::Inner),
+        B: 'a + Send,
     {
-        self.fmap_mut(f);
-        self
-    }
-}
-
-impl<'a, A> FunctorMut<'a, A> for Option<A>
-where
-    A: 'a,
-{
-    fn fmap_mut<F>(&mut self, mut f: F)
-    where
-        F: 'a + Send + FnMut(&mut Self::Inner),
-    {
-        if let Some(inner) = self {
-            f(inner);
-        }
-    }
-}
-
-impl<'a, A, B> Pure<'a, B> for Option<A>
-where
-    A: 'a,
-    B: 'a,
-{
-    fn pure(b: B) -> Self::Mapped {
         Some(b)
     }
-}
-
-impl<'a, A, B> Monad<'a, B> for Option<A>
-where
-    A: 'a,
-    B: 'a,
-{
-    fn bind<F>(self, f: F) -> Self::Mapped
+    fn bind<B, F>(
+        self,
+        f: F,
+    ) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
     where
-        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
+        B: 'a + Send,
+        F: 'a
+            + Send
+            + FnMut(
+                Self::Inner,
+            )
+                -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>,
     {
         self.and_then(f)
-    }
-}
-
-impl<'a, A, B> Applicative<'a, B> for Option<A>
-where
-    A: 'a,
-    B: 'a,
-{
-    fn apply(self, f: Option<BoxMapper<'a, Self, B>>) -> Option<B> {
-        f.and_then(move |inner| self.map(inner))
     }
 }

@@ -1,155 +1,100 @@
-//! Implementation for boxed [`Future`]
-
 use super::*;
 
 use std::future::Future;
 use std::pin::Pin;
 
-impl<'a, A, B> Functor<'a, B> for Pin<Box<dyn 'a + Future<Output = A>>>
-where
-    A: 'a,
-    B: 'a,
-{
-    type Inner = A;
-    type Mapped = Pin<Box<dyn 'a + Future<Output = B>>>;
-    fn fmap<F>(self, mut f: F) -> Self::Mapped
-    where
-        F: 'a + Send + FnMut(Self::Inner) -> B,
-    {
-        Box::pin(async move { f(self.await) })
-    }
-}
-impl<'a, A, B> Functor<'a, B>
-    for Pin<Box<dyn 'a + Future<Output = A> + Send>>
-where
-    A: 'a,
-    B: 'a,
-{
-    type Inner = A;
-    type Mapped = Pin<Box<dyn 'a + Future<Output = B> + Send>>;
-    fn fmap<F>(self, mut f: F) -> Self::Mapped
-    where
-        F: 'a + Send + FnMut(Self::Inner) -> B,
-    {
-        Box::pin(async move { f(self.await) })
-    }
+mod ty_con {
+    use std::marker::PhantomData;
+    pub struct Future<'a>(PhantomData<&'a ()>);
+    pub struct FutureSend<'a>(PhantomData<&'a ()>);
 }
 
-impl<'a, A> FunctorMut<'a, A> for Pin<Box<dyn 'a + Future<Output = A>>>
-where
-    A: 'a,
-{
-    fn fmap_mut<F>(&mut self, f: F)
+impl<'a> MonadTyCon<'a> for ty_con::Future<'a> {
+    type Outer<T> = Pin<Box<dyn 'a + Future<Output = T>>>
     where
-        F: 'a + Send + FnMut(&mut Self::Inner),
-    {
-        let this = std::mem::replace(
-            self,
-            Box::pin(async move { panic!("poisoned FunctorMut") }),
-        );
-        *self = this.fmap_fn_mutref(f);
-    }
-}
-impl<'a, A> FunctorMut<'a, A>
-    for Pin<Box<dyn 'a + Future<Output = A> + Send>>
-where
-    A: 'a,
-{
-    fn fmap_mut<F>(&mut self, f: F)
-    where
-        F: 'a + Send + FnMut(&mut Self::Inner),
-    {
-        let this = std::mem::replace(
-            self,
-            Box::pin(async move { panic!("poisoned FunctorMut") }),
-        );
-        *self = this.fmap_fn_mutref(f);
-    }
+        T: 'a + Send;
 }
 
-impl<'a, A, B> Pure<'a, B> for Pin<Box<dyn 'a + Future<Output = A>>>
-where
-    A: 'a,
-    B: 'a,
-{
-    fn pure(b: B) -> Self::Mapped {
-        Box::pin(std::future::ready(b))
-    }
-}
-impl<'a, A, B> Pure<'a, B>
-    for Pin<Box<dyn 'a + Future<Output = A> + Send>>
-where
-    A: 'a,
-    B: 'a + Send,
-{
-    fn pure(b: B) -> Self::Mapped {
-        Box::pin(std::future::ready(b))
-    }
-}
-
-impl<'a, A, B> Monad<'a, B> for Pin<Box<dyn 'a + Future<Output = A>>>
-where
-    A: 'a,
-    B: 'a,
-{
-    fn bind<F>(self, mut f: F) -> Self::Mapped
-    where
-        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
-    {
-        Box::pin(async move { f(self.await).await })
-    }
-}
-impl<'a, A, B> Monad<'a, B>
-    for Pin<Box<dyn 'a + Future<Output = A> + Send>>
+impl<'a, A> Monad<'a> for Pin<Box<dyn 'a + Future<Output = A>>>
 where
     A: 'a + Send,
-    B: 'a + Send,
 {
-    fn bind<F>(self, mut f: F) -> Self::Mapped
+    type Inner = A;
+    type TyCon = ty_con::Future<'a>;
+    fn fmap<B, F>(
+        self,
+        mut f: F,
+    ) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
     where
-        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
+        B: 'a + Send,
+        F: 'a + Send + FnMut(Self::Inner) -> B,
+    {
+        Box::pin(async move { f(self.await) })
+    }
+    fn pure<B, F>(b: B) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
+    where
+        B: 'a + Send,
+    {
+        Box::pin(async move { b })
+    }
+    fn bind<B, F>(
+        self,
+        mut f: F,
+    ) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
+    where
+        B: 'a + Send,
+        F: 'a
+            + Send
+            + FnMut(
+                Self::Inner,
+            )
+                -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>,
     {
         Box::pin(async move { f(self.await).await })
     }
 }
 
-impl<'a, A, B> Applicative<'a, B>
-    for Pin<Box<dyn 'a + Future<Output = A>>>
-where
-    A: 'a,
-    B: 'a,
-{
-    fn apply(
-        self,
-        f: Pin<Box<dyn 'a + Future<Output = BoxMapper<'a, Self, B>>>>,
-    ) -> Pin<Box<dyn 'a + Future<Output = B>>> {
-        Box::pin(async move {
-            // TODO: add test for `await` order
-            let mut mapper = f.await;
-            let a = self.await;
-            mapper(a)
-        })
-    }
+impl<'a> MonadTyCon<'a> for ty_con::FutureSend<'a> {
+    type Outer<T> = Pin<Box<dyn 'a + Send + Future<Output = T>>>
+    where
+        T: 'a + Send;
 }
-impl<'a, A, B> Applicative<'a, B>
-    for Pin<Box<dyn 'a + Future<Output = A> + Send>>
+
+impl<'a, A> Monad<'a> for Pin<Box<dyn 'a + Send + Future<Output = A>>>
 where
-    A: 'a,
-    B: 'a + Send,
+    A: 'a + Send,
 {
-    fn apply(
+    type Inner = A;
+    type TyCon = ty_con::FutureSend<'a>;
+    fn fmap<B, F>(
         self,
-        f: Pin<
-            Box<
-                dyn 'a + Future<Output = BoxMapper<'a, Self, B>> + Send,
-            >,
-        >,
-    ) -> Pin<Box<dyn 'a + Future<Output = B> + Send>> {
-        Box::pin(async move {
-            // TODO: add test for `await` order
-            let mut mapper = f.await;
-            let a = self.await;
-            mapper(a)
-        })
+        mut f: F,
+    ) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
+    where
+        B: 'a + Send,
+        F: 'a + Send + FnMut(Self::Inner) -> B,
+    {
+        Box::pin(async move { f(self.await) })
+    }
+    fn pure<B, F>(b: B) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
+    where
+        B: 'a + Send,
+    {
+        Box::pin(async move { b })
+    }
+    fn bind<B, F>(
+        self,
+        mut f: F,
+    ) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
+    where
+        B: 'a + Send,
+        F: 'a
+            + Send
+            + FnMut(
+                Self::Inner,
+            )
+                -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>,
+    {
+        Box::pin(async move { f(self.await).await })
     }
 }

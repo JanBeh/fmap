@@ -1,169 +1,97 @@
-//! Implementation for boxed [`Iterator`]
-
 use super::*;
 
-impl<'a, A, B> Functor<'a, B> for Box<dyn 'a + Iterator<Item = A>>
+mod ty_con {
+    use std::marker::PhantomData;
+    pub struct Iterator<'a>(PhantomData<&'a ()>);
+    pub struct IteratorSend<'a>(PhantomData<&'a ()>);
+}
+
+impl<'a> MonadTyCon<'a> for ty_con::Iterator<'a> {
+    type Outer<T> = Box<dyn 'a + Iterator<Item = T>>
+    where
+        T: 'a + Send;
+}
+
+impl<'a, A> Monad<'a> for Box<dyn 'a + Iterator<Item = A>>
 where
-    A: 'a,
-    B: 'a,
+    A: 'a + Send,
 {
     type Inner = A;
-    type Mapped = Box<dyn 'a + Iterator<Item = B>>;
-    fn fmap<F>(self, f: F) -> Self::Mapped
+    type TyCon = ty_con::Iterator<'a>;
+    fn fmap<B, F>(
+        self,
+        f: F,
+    ) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
     where
+        B: 'a + Send,
         F: 'a + Send + FnMut(Self::Inner) -> B,
     {
         Box::new(self.map(f))
     }
+    fn pure<B, F>(b: B) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
+    where
+        B: 'a + Send,
+    {
+        Box::new(std::iter::once(b))
+    }
+    fn bind<B, F>(
+        self,
+        f: F,
+    ) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
+    where
+        B: 'a + Send,
+        F: 'a
+            + Send
+            + FnMut(
+                Self::Inner,
+            )
+                -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>,
+    {
+        Box::new(self.flat_map(f))
+    }
 }
-impl<'a, A, B> Functor<'a, B>
-    for Box<dyn 'a + Iterator<Item = A> + Send>
+
+impl<'a> MonadTyCon<'a> for ty_con::IteratorSend<'a> {
+    type Outer<T> = Box<dyn 'a + Send + Iterator<Item = T>>
+    where
+        T: 'a + Send;
+}
+
+impl<'a, A> Monad<'a> for Box<dyn 'a + Send + Iterator<Item = A>>
 where
-    A: 'a,
-    B: 'a,
+    A: 'a + Send,
 {
     type Inner = A;
-    type Mapped = Box<dyn 'a + Iterator<Item = B> + Send>;
-    fn fmap<F>(self, f: F) -> Self::Mapped
+    type TyCon = ty_con::IteratorSend<'a>;
+    fn fmap<B, F>(
+        self,
+        f: F,
+    ) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
     where
+        B: 'a + Send,
         F: 'a + Send + FnMut(Self::Inner) -> B,
     {
         Box::new(self.map(f))
     }
-}
-
-impl<'a, A> FunctorMut<'a, A> for Box<dyn 'a + Iterator<Item = A>>
-where
-    A: 'a,
-{
-    fn fmap_mut<F>(&mut self, f: F)
+    fn pure<B, F>(b: B) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
     where
-        F: 'a + Send + FnMut(&mut Self::Inner),
+        B: 'a + Send,
     {
-        let this = std::mem::replace(
-            self,
-            Box::new(std::iter::from_fn(|| {
-                panic!("poisoned FunctorMut")
-            })),
-        );
-        *self = this.fmap_fn_mutref(f);
-    }
-}
-impl<'a, A> FunctorMut<'a, A>
-    for Box<dyn 'a + Iterator<Item = A> + Send>
-where
-    A: 'a,
-{
-    fn fmap_mut<F>(&mut self, f: F)
-    where
-        F: 'a + Send + FnMut(&mut Self::Inner),
-    {
-        let this = std::mem::replace(
-            self,
-            Box::new(std::iter::from_fn(|| {
-                panic!("poisoned FunctorMut")
-            })),
-        );
-        *self = this.fmap_fn_mutref(f);
-    }
-}
-
-impl<'a, A, B> Pure<'a, B> for Box<dyn 'a + Iterator<Item = A>>
-where
-    A: 'a,
-    B: 'a,
-{
-    fn pure(b: B) -> Self::Mapped {
         Box::new(std::iter::once(b))
     }
-}
-impl<'a, A, B> Pure<'a, B> for Box<dyn 'a + Iterator<Item = A> + Send>
-where
-    A: 'a,
-    B: 'a + Send,
-{
-    fn pure(b: B) -> Self::Mapped {
-        Box::new(std::iter::once(b))
-    }
-}
-
-impl<'a, A, B> Monad<'a, B> for Box<dyn 'a + Iterator<Item = A>>
-where
-    A: 'a,
-    B: 'a,
-{
-    fn bind<F>(self, f: F) -> Self::Mapped
+    fn bind<B, F>(
+        self,
+        f: F,
+    ) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
     where
-        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
+        B: 'a + Send,
+        F: 'a
+            + Send
+            + FnMut(
+                Self::Inner,
+            )
+                -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>,
     {
-        struct Iter<'a, A, B> {
-            f: Box<
-                dyn 'a
-                    + Send
-                    + FnMut(A) -> Box<dyn 'a + Iterator<Item = B>>,
-            >,
-            outer: Box<dyn 'a + Iterator<Item = A>>,
-            inner: Box<dyn 'a + Iterator<Item = B>>,
-        }
-        impl<'a, A, B> Iterator for Iter<'a, A, B> {
-            type Item = B;
-            fn next(&mut self) -> Option<B> {
-                match self.inner.next() {
-                    None => match self.outer.next() {
-                        None => None,
-                        Some(a) => {
-                            self.inner = (self.f)(a);
-                            self.inner.next()
-                        }
-                    },
-                    Some(b) => Some(b),
-                }
-            }
-        }
-        Box::new(Iter {
-            f: Box::new(f),
-            outer: self,
-            inner: Box::new(std::iter::empty()),
-        })
-    }
-}
-impl<'a, A, B> Monad<'a, B> for Box<dyn 'a + Iterator<Item = A> + Send>
-where
-    A: 'a,
-    B: 'a + Send,
-{
-    fn bind<F>(self, f: F) -> Self::Mapped
-    where
-        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
-    {
-        struct Iter<'a, A, B> {
-            f: Box<
-                dyn 'a
-                    + Send
-                    + FnMut(A) -> Box<dyn 'a + Iterator<Item = B> + Send>,
-            >,
-            outer: Box<dyn 'a + Iterator<Item = A> + Send>,
-            inner: Box<dyn 'a + Iterator<Item = B> + Send>,
-        }
-        impl<'a, A, B> Iterator for Iter<'a, A, B> {
-            type Item = B;
-            fn next(&mut self) -> Option<B> {
-                match self.inner.next() {
-                    None => match self.outer.next() {
-                        None => None,
-                        Some(a) => {
-                            self.inner = (self.f)(a);
-                            self.inner.next()
-                        }
-                    },
-                    Some(b) => Some(b),
-                }
-            }
-        }
-        Box::new(Iter {
-            f: Box::new(f),
-            outer: self,
-            inner: Box::new(std::iter::empty()),
-        })
+        Box::new(self.flat_map(f))
     }
 }

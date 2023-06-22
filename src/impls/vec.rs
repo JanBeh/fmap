@@ -1,84 +1,50 @@
-//! Implementations for [`Vec`]
-
 use super::*;
 
-impl<'a, A, B> Functor<'a, B> for Vec<A>
+mod ty_con {
+    pub struct Vec;
+}
+
+impl<'a> MonadTyCon<'a> for ty_con::Vec {
+    type Outer<T> = Vec<T>
+    where
+        T: 'a + Send;
+}
+
+impl<'a, A> Monad<'a> for Vec<A>
 where
-    A: 'a,
-    B: 'a,
+    A: 'a + Send,
 {
     type Inner = A;
-    type Mapped = Vec<B>;
-    fn fmap<F>(self, f: F) -> Self::Mapped
+    type TyCon = ty_con::Vec;
+    fn fmap<B, F>(
+        self,
+        f: F,
+    ) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
     where
+        B: 'a + Send,
         F: 'a + Send + FnMut(Self::Inner) -> B,
     {
         self.into_iter().map(f).collect()
     }
-    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    fn pure<B, F>(b: B) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
     where
-        F: 'a + Send + FnMut(&mut Self::Inner),
+        B: 'a + Send,
     {
-        self.fmap_mut(f);
-        self
-    }
-}
-
-impl<'a, A> FunctorMut<'a, A> for Vec<A>
-where
-    A: 'a,
-{
-    fn fmap_mut<F>(&mut self, mut f: F)
-    where
-        F: 'a + Send + FnMut(&mut Self::Inner),
-    {
-        for inner in self.iter_mut() {
-            f(inner);
-        }
-    }
-}
-
-impl<'a, A, B> Pure<'a, B> for Vec<A>
-where
-    A: 'a,
-    B: 'a,
-{
-    fn pure(b: B) -> Self::Mapped {
         vec![b]
     }
-}
-
-impl<'a, A, B> Monad<'a, B> for Vec<A>
-where
-    A: 'a,
-    B: 'a,
-{
-    fn bind<F>(self, mut f: F) -> Self::Mapped
+    fn bind<B, F>(
+        self,
+        f: F,
+    ) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
     where
-        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
+        B: 'a + Send,
+        F: 'a
+            + Send
+            + FnMut(
+                Self::Inner,
+            )
+                -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>,
     {
-        let mut vec = Vec::new();
-        for item in self.into_iter() {
-            for item in f(item).into_iter() {
-                vec.push(item);
-            }
-        }
-        vec
-    }
-}
-
-impl<'a, A, B> Applicative<'a, B> for Vec<A>
-where
-    A: 'a + Clone,
-    B: 'a,
-{
-    fn apply(self, f: Vec<BoxMapper<'a, Self, B>>) -> Vec<B> {
-        let mut vec = Vec::with_capacity(f.len() * self.len());
-        for mut func in f.into_iter() {
-            for item in self.iter().cloned() {
-                vec.push((func)(item))
-            }
-        }
-        vec
+        self.into_iter().flat_map(f).collect()
     }
 }

@@ -1,75 +1,55 @@
-//! Implementations for [`Result`]
-
 use super::*;
 
-impl<'a, A, B, E> Functor<'a, B> for Result<A, E>
+mod ty_con {
+    use std::marker::PhantomData;
+    pub struct Result<E>(PhantomData<E>);
+}
+
+impl<'a, E> MonadTyCon<'a> for ty_con::Result<E>
 where
-    A: 'a,
-    B: 'a,
+    E: 'a + Send,
+{
+    type Outer<T> = Result<T, E>
+    where
+        T: 'a + Send;
+}
+
+impl<'a, A, E> Monad<'a> for Result<A, E>
+where
+    A: 'a + Send,
+    E: 'a + Send,
 {
     type Inner = A;
-    type Mapped = Result<B, E>;
-    fn fmap<F>(self, f: F) -> Self::Mapped
+    type TyCon = ty_con::Result<E>;
+    fn fmap<B, F>(
+        self,
+        f: F,
+    ) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
     where
+        B: 'a + Send,
         F: 'a + Send + FnMut(Self::Inner) -> B,
     {
         self.map(f)
     }
-    fn fmap_fn_mutref<F>(mut self, f: F) -> Self
+    fn pure<B, F>(b: B) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
     where
-        F: 'a + Send + FnMut(&mut Self::Inner),
+        B: 'a + Send,
     {
-        self.fmap_mut(f);
-        self
-    }
-}
-
-impl<'a, A, E> FunctorMut<'a, A> for Result<A, E>
-where
-    A: 'a,
-{
-    fn fmap_mut<F>(&mut self, mut f: F)
-    where
-        F: 'a + Send + FnMut(&mut Self::Inner),
-    {
-        if let Ok(inner) = self {
-            f(inner);
-        }
-    }
-}
-
-impl<'a, A, B, E> Pure<'a, B> for Result<A, E>
-where
-    A: 'a,
-    B: 'a,
-{
-    fn pure(b: B) -> Self::Mapped {
         Ok(b)
     }
-}
-
-impl<'a, A, B, E> Monad<'a, B> for Result<A, E>
-where
-    A: 'a,
-    B: 'a,
-{
-    fn bind<F>(self, f: F) -> Self::Mapped
+    fn bind<B, F>(
+        self,
+        f: F,
+    ) -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>
     where
-        F: 'a + Send + FnMut(Self::Inner) -> Self::Mapped,
+        B: 'a + Send,
+        F: 'a
+            + Send
+            + FnMut(
+                Self::Inner,
+            )
+                -> <Self::TyCon as MonadTyCon<'a>>::Outer<B>,
     {
         self.and_then(f)
-    }
-}
-
-impl<'a, A, B, E> Applicative<'a, B> for Result<A, E>
-where
-    A: 'a,
-    B: 'a,
-{
-    fn apply(
-        self,
-        f: Result<BoxMapper<'a, Self, B>, E>,
-    ) -> Result<B, E> {
-        f.and_then(move |inner| self.map(inner))
     }
 }
